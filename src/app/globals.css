@@ -1,0 +1,691 @@
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable.css");
+@import "tailwindcss";
+@import "../styles/tokens.css";
+
+@theme inline {
+  --color-background: var(--color-bg-primary);
+  --color-foreground: var(--color-text-primary);
+  --color-secondary: var(--color-bg-secondary);
+  --color-tertiary: var(--color-bg-tertiary);
+  --color-accent: var(--color-accent);
+  --color-accent-hover: var(--color-accent-hover);
+  --color-danger: var(--color-danger);
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --font-sans: "Pretendard Variable", Pretendard, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "SFMono-Regular", Menlo, Consolas, monospace;
+}
+
+body {
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  line-height: var(--line-normal);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.text-ui-2xs {
+  font-size: var(--text-2xs);
+  line-height: var(--line-tight);
+}
+
+.text-ui-xs {
+  font-size: var(--text-xs);
+  line-height: var(--line-tight);
+}
+
+.text-ui-sm {
+  font-size: var(--text-sm);
+  line-height: var(--line-normal);
+}
+
+.text-ui-base {
+  font-size: var(--text-base);
+  line-height: var(--line-normal);
+}
+
+.text-ui-title {
+  font-size: var(--text-xl);
+  line-height: 1.2;
+}
+
+.calendar-density-root {
+  --calendar-control-font-size: var(--text-3xs);
+  --calendar-heading-font-size: var(--text-2xs);
+  --calendar-weekday-font-size: var(--text-3xs);
+  --calendar-date-font-size: var(--text-3xs);
+  --calendar-entry-font-size: var(--text-3xs);
+  --calendar-meta-font-size: var(--text-3xs);
+  --calendar-control-height: 1.75rem;
+  --calendar-control-padding-x: 0.5rem;
+  --calendar-entry-height: var(--calendar-entry-height-compact);
+  --calendar-entry-padding-x: var(--calendar-entry-padding-x-compact);
+  --calendar-month-cell-min-height: 2.5rem;
+  --calendar-week-cell-min-height: 3rem;
+  --calendar-quarter-cell-min-height: 2rem;
+  --calendar-day-cell-min-height: 10rem;
+  --calendar-date-pill-min-width: 1.35rem;
+  --calendar-range-bridge-overlap: 0.25rem;
+}
+
+.calendar-density-root[data-fullscreen="true"] {
+  --calendar-month-cell-min-height: 2.5rem;
+  --calendar-week-cell-min-height: 3rem;
+  --calendar-quarter-cell-min-height: 2rem;
+  --calendar-day-cell-min-height: 10rem;
+}
+
+.calendar-density-root[data-display-unit="day"] {
+  --calendar-heading-font-size: var(--text-xs);
+  --calendar-date-font-size: var(--text-sm);
+  --calendar-entry-font-size: var(--text-xs);
+  --calendar-meta-font-size: var(--text-xs);
+  --calendar-entry-height: 1.875rem;
+  --calendar-day-cell-min-height: 10rem;
+  --calendar-range-bridge-overlap: 0.75rem;
+}
+
+.calendar-density-root[data-display-unit="day"][data-fullscreen="true"] {
+  --calendar-day-cell-min-height: 10rem;
+}
+
+@media (min-width: 640px) {
+  .calendar-density-root {
+    --calendar-control-font-size: var(--text-2xs);
+    --calendar-heading-font-size: var(--text-xs);
+    --calendar-weekday-font-size: var(--text-2xs);
+    --calendar-date-font-size: var(--text-2xs);
+    --calendar-entry-font-size: var(--text-2xs);
+    --calendar-meta-font-size: var(--text-2xs);
+    --calendar-control-height: 2rem;
+    --calendar-control-padding-x: 0.625rem;
+    --calendar-entry-height: var(--calendar-entry-height-comfortable);
+    --calendar-entry-padding-x: var(--calendar-entry-padding-x-comfortable);
+    --calendar-month-cell-min-height: 3rem;
+    --calendar-week-cell-min-height: 4rem;
+    --calendar-quarter-cell-min-height: 2.5rem;
+    --calendar-day-cell-min-height: 12rem;
+    --calendar-date-pill-min-width: 1.5rem;
+    --calendar-range-bridge-overlap: 0.3125rem;
+  }
+
+  .calendar-density-root[data-display-unit="day"] {
+    --calendar-heading-font-size: var(--text-sm);
+    --calendar-date-font-size: var(--text-base);
+    --calendar-entry-font-size: var(--text-sm);
+    --calendar-meta-font-size: var(--text-xs);
+    --calendar-entry-height: 2.125rem;
+    --calendar-day-cell-min-height: 12rem;
+  }
+
+  .calendar-density-root[data-display-unit="day"][data-fullscreen="true"] {
+    --calendar-day-cell-min-height: 12rem;
+  }
+}
+
+.calendar-toolbar-surface {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-secondary);
+  padding: 0.5rem 0.625rem;
+}
+
+.calendar-nav-button,
+.calendar-accent-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--calendar-control-height);
+  padding-inline: var(--calendar-control-padding-x);
+  border-radius: var(--radius-md);
+  font-size: var(--calendar-control-font-size);
+  line-height: var(--line-micro);
+  font-weight: 600;
+  transition: background-color 120ms ease, color 120ms ease, opacity 120ms ease;
+}
+
+.calendar-nav-button {
+  min-width: var(--calendar-control-height);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-primary);
+  color: var(--color-text-secondary);
+}
+
+.calendar-nav-button:hover {
+  background: var(--color-bg-hover);
+}
+
+.calendar-accent-button {
+  border: 1px solid var(--color-accent);
+  background: var(--color-accent-light);
+  color: var(--color-accent);
+}
+
+.calendar-accent-button:hover {
+  opacity: 0.82;
+}
+
+.calendar-heading-text,
+.calendar-section-title {
+  font-size: var(--calendar-heading-font-size);
+  line-height: var(--line-tight);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.calendar-legend {
+  align-items: center;
+  gap: 0.75rem;
+  font-size: var(--calendar-meta-font-size);
+  line-height: var(--line-micro);
+  color: var(--color-text-tertiary);
+}
+
+.calendar-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.calendar-legend-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: var(--radius-full);
+  border-width: 1px;
+}
+
+.calendar-legend-bar {
+  width: 1rem;
+  height: 0.375rem;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+}
+
+.calendar-weekday-label {
+  padding-block: 0.25rem;
+  text-align: center;
+  font-size: var(--calendar-weekday-font-size);
+  line-height: var(--line-micro);
+  font-weight: 600;
+}
+
+.calendar-day-cell {
+  padding: 0;
+}
+
+.calendar-cell-month {
+  min-height: var(--calendar-month-cell-min-height);
+}
+
+.calendar-cell-week {
+  min-height: var(--calendar-week-cell-min-height);
+}
+
+.calendar-cell-quarter {
+  min-height: var(--calendar-quarter-cell-min-height);
+}
+
+.calendar-cell-day {
+  min-height: var(--calendar-day-cell-min-height);
+}
+
+.calendar-cell-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.25rem;
+  padding: 0.0625rem 0.0625rem 0.25rem;
+}
+
+.calendar-entry-region {
+  min-height: 0;
+  flex: 1;
+  padding: 0 0 0.125rem;
+  overflow-y: hidden;
+  overflow-x: visible;
+}
+
+.calendar-date-button {
+  display: inline-flex;
+  max-width: 100%;
+  min-width: var(--calendar-date-pill-min-width);
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  padding: 0.125rem 0.3125rem;
+  font-size: var(--calendar-date-font-size);
+  line-height: var(--line-micro);
+  font-weight: 600;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.calendar-date-button:hover {
+  background: var(--color-accent-light);
+}
+
+.calendar-date-button-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-day-cell[data-calendar-variant="day"] .calendar-cell-header {
+  padding: 0.75rem 0.75rem 0.5rem;
+}
+
+.calendar-day-cell[data-calendar-variant="day"] .calendar-entry-region {
+  padding: 0 0.75rem 0.75rem;
+}
+
+.calendar-day-cell[data-calendar-variant="day"] .calendar-date-button {
+  min-height: 2.25rem;
+  justify-content: flex-start;
+  border-radius: var(--radius-md);
+  padding-inline: 0.75rem;
+}
+
+.calendar-entry-stack {
+  display: grid;
+  gap: var(--calendar-stack-gap);
+  overflow: visible;
+}
+
+.calendar-entry-placeholder,
+.calendar-entry-chip,
+.calendar-more-button {
+  min-height: var(--calendar-entry-height);
+  height: var(--calendar-entry-height);
+  border-radius: var(--radius-2xs);
+}
+
+.calendar-entry-placeholder {
+  width: 100%;
+}
+
+.calendar-entry-chip {
+  display: inline-flex;
+  width: 100%;
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+  align-items: center;
+  overflow: hidden;
+  padding-inline: var(--calendar-entry-padding-x);
+  font-size: var(--calendar-entry-font-size);
+  line-height: var(--line-micro);
+  font-weight: 500;
+  text-align: left;
+  transition: background-color 120ms ease, opacity 120ms ease;
+}
+
+.calendar-entry-label {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: clip;
+}
+
+.calendar-entry-range:hover {
+  opacity: 0.9;
+}
+
+.calendar-entry-marker {
+  gap: 0.25rem;
+  color: var(--color-text-primary);
+}
+
+.calendar-entry-marker:hover {
+  background: var(--color-accent-light);
+}
+
+.calendar-marker-dot {
+  width: 0.375rem;
+  height: 0.375rem;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  border-width: 1px;
+}
+
+.calendar-day-cell[data-calendar-variant="day"] .calendar-entry-stack {
+  gap: 0.5rem;
+}
+
+.calendar-day-cell[data-calendar-variant="day"] .calendar-entry-chip,
+.calendar-day-cell[data-calendar-variant="day"] .calendar-more-button {
+  border-radius: var(--radius-sm);
+}
+
+.calendar-day-cell[data-calendar-variant="day"] .calendar-entry-marker {
+  gap: 0.5rem;
+}
+
+.calendar-day-cell[data-calendar-variant="day"] .calendar-marker-dot {
+  width: 0.625rem;
+  height: 0.625rem;
+}
+
+.calendar-entry-start {
+  border-top-left-radius: var(--radius-2xs);
+  border-bottom-left-radius: var(--radius-2xs);
+}
+
+.calendar-entry-middle {
+  border-radius: 0;
+}
+
+.calendar-entry-end {
+  border-top-right-radius: var(--radius-2xs);
+  border-bottom-right-radius: var(--radius-2xs);
+}
+
+.calendar-entry-single {
+  border-radius: var(--radius-2xs);
+}
+
+.calendar-entry-bridge-left {
+  margin-left: calc((var(--calendar-grid-gap) + var(--calendar-range-bridge-overlap)) * -1);
+}
+
+.calendar-entry-bridge-right {
+  margin-right: calc((var(--calendar-grid-gap) + var(--calendar-range-bridge-overlap)) * -1);
+}
+
+.calendar-more-button {
+  display: inline-flex;
+  width: 100%;
+  align-items: center;
+  padding-inline: var(--calendar-entry-padding-x);
+  font-size: var(--calendar-meta-font-size);
+  line-height: var(--line-micro);
+  color: var(--color-text-secondary);
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.calendar-more-button:hover {
+  background: var(--color-accent-light);
+  color: var(--color-text-primary);
+}
+
+.calendar-empty-state {
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  padding-block: 2rem;
+  text-align: center;
+  font-size: var(--text-xs);
+  line-height: var(--line-tight);
+  color: var(--color-text-tertiary);
+}
+
+html[data-task-fullscreen="true"] .mobile-nav-root {
+  display: none;
+}
+
+/* 스크롤바 스타일 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border-hover);
+}
+
+/* ============================================================
+ * Rich text typography (explicit styles — Tailwind v4 has no prose
+ * plugin configured; these are scoped to .rich-text-prose)
+ * ============================================================ */
+
+.rich-text-prose {
+  color: var(--color-text-primary);
+  font-size: var(--text-base);
+  line-height: 1.65;
+}
+
+.rich-text-prose h1,
+.rich-text-prose h2,
+.rich-text-prose h3,
+.rich-text-prose h4 {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  line-height: 1.25;
+  margin-top: 1.2em;
+  margin-bottom: 0.5em;
+}
+.rich-text-prose h1:first-child,
+.rich-text-prose h2:first-child,
+.rich-text-prose h3:first-child { margin-top: 0; }
+
+.rich-text-prose h1 { font-size: var(--text-2xl); border-bottom: 1px solid var(--color-border); padding-bottom: 0.25em; }
+.rich-text-prose h2 { font-size: var(--text-xl); }
+.rich-text-prose h3 { font-size: var(--text-lg); }
+.rich-text-prose h4 { font-size: var(--text-base); }
+
+.rich-text-prose p {
+  margin: 0.5em 0;
+}
+
+.rich-text-prose a {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.rich-text-prose a:hover { color: var(--color-accent-hover); }
+
+.rich-text-prose strong { font-weight: 600; }
+.rich-text-prose em { font-style: italic; }
+.rich-text-prose del { text-decoration: line-through; color: var(--color-text-secondary); }
+
+.rich-text-prose ul,
+.rich-text-prose ol {
+  margin: 0.5em 0;
+  padding-left: 1.6em;
+}
+.rich-text-prose ul { list-style: disc; }
+.rich-text-prose ol { list-style: decimal; }
+.rich-text-prose li { margin: 0.2em 0; }
+.rich-text-prose li > p { margin: 0.2em 0; }
+
+.rich-text-prose ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0.2em;
+}
+.rich-text-prose ul[data-type="taskList"] li {
+  display: flex;
+  gap: 0.4em;
+  align-items: flex-start;
+}
+.rich-text-prose ul[data-type="taskList"] li > label {
+  margin-top: 0.15em;
+}
+.rich-text-prose ul[data-type="taskList"] li > div > p {
+  margin: 0;
+}
+
+.rich-text-prose blockquote {
+  margin: 0.8em 0;
+  padding: 0.2em 0.9em;
+  border-left: 3px solid var(--color-border);
+  color: var(--color-text-secondary);
+  background: var(--color-bg-secondary);
+  border-radius: 0 4px 4px 0;
+}
+
+.rich-text-prose code {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 0 4px;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+.rich-text-prose pre {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 0.8em 1em;
+  overflow-x: auto;
+  margin: 0.8em 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+}
+.rich-text-prose pre code {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-size: inherit;
+}
+
+.rich-text-prose hr {
+  border: none;
+  border-top: 1px solid var(--color-border);
+  margin: 1.2em 0;
+}
+
+.rich-text-prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.6em 0;
+}
+
+.rich-text-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.8em 0;
+  font-size: var(--text-sm);
+  overflow: hidden;
+  border-radius: 6px;
+}
+.rich-text-prose th,
+.rich-text-prose td {
+  border: 1px solid var(--color-border);
+  padding: 0.4em 0.7em;
+  text-align: left;
+  vertical-align: top;
+}
+.rich-text-prose th {
+  background: var(--color-bg-secondary);
+  font-weight: 600;
+}
+.rich-text-prose mark {
+  background: var(--color-accent-light);
+  color: var(--color-accent);
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
+.rich-text-prose a.rich-text-mention,
+.rich-text-mention {
+  display: inline-block;
+  padding: 0 6px;
+  margin: 0 1px;
+  border-radius: 999px;
+  background: var(--color-accent-light);
+  color: var(--color-accent);
+  font-weight: 500;
+  text-decoration: none;
+  line-height: 1.5;
+  font-size: 0.95em;
+}
+.rich-text-prose a.rich-text-mention:hover {
+  background: var(--color-accent);
+  color: white;
+}
+
+/* Issue mention chip (`#TASK-42`) — warm accent to distinguish from user mention. */
+.rich-text-prose a.mention-issue,
+.mention-issue {
+  display: inline-block;
+  padding: 0 6px;
+  margin: 0 1px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  color: var(--color-accent);
+  font-weight: 500;
+  text-decoration: none;
+  line-height: 1.5;
+  font-size: 0.95em;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+}
+.rich-text-prose a.mention-issue:hover {
+  background: var(--color-accent);
+  color: white;
+}
+
+/* Deleted/invalid mention fallback — visually dimmed, not clickable. */
+.mention-missing {
+  opacity: 0.55;
+  text-decoration: line-through;
+  cursor: not-allowed;
+}
+
+/* Editor-only: give the contenteditable surface the same prose look
+ * plus the paragraph placeholder handling tiptap emits. */
+.rich-text-prose [contenteditable]:focus { outline: none; }
+.rich-text-prose p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--color-text-tertiary);
+  float: left;
+  pointer-events: none;
+  height: 0;
+}
+
+/* Table drag handles inside editor */
+.rich-text-prose table .selectedCell::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 0; bottom: 0;
+  background: var(--color-accent-light);
+  pointer-events: none;
+  opacity: 0.35;
+}
+.rich-text-prose table .column-resize-handle {
+  position: absolute;
+  right: -2px; top: 0; bottom: -2px;
+  width: 4px;
+  background: var(--color-accent);
+  pointer-events: none;
+}
+
+/* Markdown source mode: plain monospace textarea. Renders raw markdown as-is
+ * (no live table/list rendering); preview happens only in the renderer. */
+.rich-text-md-source {
+  display: block;
+  color: var(--color-text-primary);
+  line-height: 1.6;
+  tab-size: 2;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+.rich-text-md-source::placeholder {
+  color: var(--color-text-tertiary);
+}

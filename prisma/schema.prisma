@@ -1,0 +1,918 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ============================================================
+// ?�용??(User)
+// ============================================================
+
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  name            String
+  shortName       String?
+  avatarUpdatedAt DateTime?
+  password        String
+  role            String    @default("USER") // "ADMIN" | "USER"
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  createdWorkItems  WorkItem[]        @relation("CreatedBy")
+  assignedWorkItems WorkItem[]        @relation("AssignedTo")
+  comments          WorkItemComment[]
+  historyEntries    WorkItemHistory[]
+  projectMembers    ProjectMember[]
+  ownedProjects     Project[]         @relation("ProjectToOwner")
+
+  watchers              WorkItemWatcher[] @relation("WatcherUser")
+  watchersAdded         WorkItemWatcher[] @relation("WatcherAddedBy")
+  notificationsReceived Notification[]    @relation("NotificationRecipient")
+  notificationsActed    Notification[]    @relation("NotificationActor")
+
+  ownedGroups        ProjectGroup[]          @relation("GroupOwner")
+  groupMemberships   ProjectGroupMember[]
+  projectPreferences UserProjectPreference[]
+
+  checklistsCreated      Checklist[]         @relation("ChecklistCreatedBy")
+  checklistRunsStarted   ChecklistRun[]      @relation("ChecklistRunStartedBy")
+  checklistRunsCompleted ChecklistRun[]      @relation("ChecklistRunCompletedBy")
+  checklistItemsChecked  ChecklistRunItem[]  @relation("ChecklistRunItemCheckedBy")
+  checklistEvents        ChecklistRunEvent[] @relation("ChecklistEventActor")
+
+  projectActivities ProjectActivity[]      @relation("ProjectActivityActor")
+  groupActivities   ProjectGroupActivity[] @relation("ProjectGroupActivityActor")
+
+  cyclesOwned          Cycle[]           @relation("CycleOwner")
+  cyclesCreated        Cycle[]           @relation("CycleCreator")
+  cyclesUpdated        Cycle[]           @relation("CycleUpdatedBy")
+  cycleComments        CycleComment[]    @relation("CycleCommentAuthor")
+  cycleWatching        CycleWatcher[]    @relation("CycleWatcherUser")
+  cycleWatchAdded      CycleWatcher[]    @relation("CycleWatcherAddedBy")
+  cycleHistory         CycleHistory[]    @relation("CycleHistoryActor")
+  cycleRecordMetaOwned CycleRecordMeta[] @relation("CycleRecordMetaOwner")
+  savedViews           SavedView[]       @relation("SavedViewCreatedBy")
+}
+
+// ============================================================
+// ?�드 (Field)
+// ============================================================
+
+model Field {
+  id                   String   @id @default(cuid())
+  name                 String
+  key                  String   @unique
+  type                 String // TEXT, NUMBER, DATE, SELECT, MULTI_SELECT, URL, USER, OBJECT_REF, MULTI_OBJECT_REF, ENTITY_REF, MULTI_ENTITY_REF
+  referenceObjectKey   String? // legacy entity reference target key
+  referenceObjectDefId String?
+  options              String? // JSON string for SELECT types: [{value, label, color}]
+  defaultValue         String? // JSON string matching stored field value shape
+  isSystem             Boolean  @default(false)
+  isRequired           Boolean  @default(false) // deprecated: use FieldSchemaField.isRequired
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  referenceObjectDef      ObjectDef?               @relation(fields: [referenceObjectDefId], references: [id], onDelete: SetNull)
+  fieldSchemas            FieldSchemaField[]
+  values                  WorkItemFieldValue[]
+  fieldValues             FieldValue[]
+  recordFieldValues       EntityRecordFieldValue[]
+  objectRecordFieldValues ObjectRecordFieldValue[]
+
+  @@index([referenceObjectDefId])
+}
+
+model SavedView {
+  id           String    @id @default(cuid())
+  workspaceKey String
+  name         String
+  isShared     Boolean   @default(false)
+  isDefault    Boolean   @default(false)
+  config       String    @default("{}")
+  createdById  String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+
+  createdBy User? @relation("SavedViewCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([workspaceKey, deletedAt])
+  @@index([createdById])
+}
+
+// ============================================================
+// ?�태 (Status)
+// ============================================================
+
+model Status {
+  id        String   @id @default(cuid())
+  name      String
+  key       String   @unique
+  category  String // TODO, IN_PROGRESS, DONE
+  color     String
+  isSystem  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  statusSchemas      StatusSchemaStatus[]
+  startStatusSchemas StatusSchema[]       @relation("StatusSchemaStartStatus")
+  transitionsFrom    StatusTransition[]   @relation("StatusTransitionFrom")
+  transitionsTo      StatusTransition[]   @relation("StatusTransitionTo")
+  workItems          WorkItem[]
+  cycles             Cycle[]
+}
+
+// ============================================================
+// ?�드 구성??(Field Schema)
+// ============================================================
+
+model FieldSchema {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  fields     FieldSchemaField[]
+  issueTypes IssueType[]
+  objectDefs ObjectDef[]
+}
+
+model FieldSchemaField {
+  fieldSchemaId String
+  fieldId       String
+  sortOrder     Int     @default(0)
+  isRequired    Boolean @default(false)
+  defaultValue  String? // JSON string; per-scheme override of Field.defaultValue
+
+  fieldSchema FieldSchema @relation(fields: [fieldSchemaId], references: [id], onDelete: Cascade)
+  field       Field       @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+
+  @@id([fieldSchemaId, fieldId])
+}
+
+// ============================================================
+// ?�태 구성??(Status Schema)
+// ============================================================
+
+model StatusSchema {
+  id            String   @id @default(cuid())
+  name          String
+  startStatusId String?
+  createdAt     DateTime @default(now())
+
+  startStatus Status?              @relation("StatusSchemaStartStatus", fields: [startStatusId], references: [id], onDelete: SetNull)
+  statuses    StatusSchemaStatus[]
+  transitions StatusTransition[]
+  issueTypes  IssueType[]
+
+  @@index([startStatusId])
+}
+
+// 상태 전이(workflow). 특정 status schema 내에서 from → to 이동 허용 규칙.
+// 한 스키마에 전이가 하나도 없으면 "제약 없음"(모든 상태 간 이동 허용)으로 해석한다(하위 호환).
+model StatusTransition {
+  id             String   @id @default(cuid())
+  statusSchemaId String
+  fromStatusId   String
+  toStatusId     String
+  createdAt      DateTime @default(now())
+
+  statusSchema StatusSchema @relation(fields: [statusSchemaId], references: [id], onDelete: Cascade)
+  fromStatus   Status       @relation("StatusTransitionFrom", fields: [fromStatusId], references: [id], onDelete: Cascade)
+  toStatus     Status       @relation("StatusTransitionTo", fields: [toStatusId], references: [id], onDelete: Cascade)
+
+  @@unique([statusSchemaId, fromStatusId, toStatusId])
+  @@index([statusSchemaId])
+  @@index([fromStatusId])
+  @@index([toStatusId])
+}
+
+model StatusSchemaStatus {
+  statusSchemaId String
+  statusId       String
+  sortOrder      Int    @default(0)
+
+  statusSchema StatusSchema @relation(fields: [statusSchemaId], references: [id], onDelete: Cascade)
+  status       Status       @relation(fields: [statusId], references: [id], onDelete: Cascade)
+
+  @@id([statusSchemaId, statusId])
+}
+
+// ============================================================
+// ?�형 (Issue Type)
+// ============================================================
+
+model IssueType {
+  id                        String    @id @default(cuid())
+  key                       String?   @unique
+  name                      String    @unique
+  category                  String    @default("ISSUE")
+  icon                      String?
+  color                     String?
+  fieldSchemaId             String
+  statusSchemaId            String?
+  allowedViews              String    @default("[]")
+  allowedChildEntityTypeIds String    @default("[]")
+  isSystem                  Boolean   @default(false)
+  deletedAt                 DateTime?
+  createdAt                 DateTime  @default(now())
+
+  fieldSchema        FieldSchema        @relation(fields: [fieldSchemaId], references: [id])
+  statusSchema       StatusSchema?      @relation(fields: [statusSchemaId], references: [id])
+  workItems          WorkItem[]
+  cycles             Cycle[]
+  projectLinks       ProjectIssueType[]
+  defaultForProjects Project[]          @relation("ProjectDefaultIssueType")
+
+  @@index([category])
+  @@index([deletedAt])
+  @@map("EntityType")
+}
+
+// ============================================================
+// ?�슈 ?�번 카운??(Issue Counter)
+// ============================================================
+
+model IssueCounter {
+  id      String @id
+  current Int    @default(0)
+}
+
+// ============================================================
+// ?�업 ??�� (Work Item)
+// ============================================================
+
+model WorkItem {
+  id                  String    @id @default(cuid())
+  issueKey            String    @unique @map("recordKey")
+  title               String
+  description         String?
+  descriptionMentions String    @default("[]")
+  startDate           DateTime?
+  dueDate             DateTime?
+  issueTypeId         String    @map("entityTypeId")
+  statusId            String
+  projectId           String?
+  parentId            String?
+  sourceTable         String?
+  sourceId            String?
+  creatorId           String?
+  assigneeId          String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  deletedAt           DateTime?
+
+  issueType         IssueType                 @relation(fields: [issueTypeId], references: [id])
+  status            Status                    @relation(fields: [statusId], references: [id])
+  project           Project?                  @relation(fields: [projectId], references: [id])
+  parent            WorkItem?                 @relation("WorkItemHierarchy", fields: [parentId], references: [id])
+  children          WorkItem[]                @relation("WorkItemHierarchy")
+  creator           User?                     @relation("CreatedBy", fields: [creatorId], references: [id])
+  assignee          User?                     @relation("AssignedTo", fields: [assigneeId], references: [id])
+  fieldValues       WorkItemFieldValue[]
+  comments          WorkItemComment[]
+  histories         WorkItemHistory[]
+  projectIssueKeys  WorkItemProjectIssueKey[]
+  watchers          WorkItemWatcher[]
+  notifications     Notification[]
+  recordFieldValues EntityRecordFieldValue[]
+  cycleMeta         CycleRecordMeta?
+
+  @@unique([sourceTable, sourceId])
+  @@index([assigneeId])
+  @@index([projectId])
+  @@index([statusId])
+  @@index([parentId])
+  @@index([creatorId])
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@map("EntityRecord")
+}
+
+model ProjectIssueCounter {
+  projectId String @id
+  current   Int    @default(0)
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model WorkItemProjectIssueKey {
+  id          String   @id @default(cuid())
+  workItemId  String
+  projectId   String
+  issueNumber Int
+  createdAt   DateTime @default(now())
+
+  workItem WorkItem @relation(fields: [workItemId], references: [id], onDelete: Cascade)
+  project  Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([workItemId, projectId])
+  @@unique([projectId, issueNumber])
+}
+
+model Project {
+  id                 String   @id @default(cuid())
+  name               String
+  key                String   @unique
+  description        String?
+  isPersonal         Boolean  @default(false)
+  ownerId            String?
+  defaultIssueTypeId String?
+  groupId            String?
+  sortOrderInGroup   Int      @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  owner               User?                     @relation("ProjectToOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  defaultIssueType    IssueType?                @relation("ProjectDefaultIssueType", fields: [defaultIssueTypeId], references: [id], onDelete: SetNull)
+  group               ProjectGroup?             @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  workItems           WorkItem[]
+  members             ProjectMember[]
+  workItemIssueKeys   WorkItemProjectIssueKey[]
+  projectIssueCounter ProjectIssueCounter?
+  enabledIssueTypes   ProjectIssueType[]
+  notifications       Notification[]
+  userPreferences     UserProjectPreference[]
+  checklists          Checklist[]
+  activities          ProjectActivity[]
+  cycles              Cycle[]
+  cycleRecordMeta     CycleRecordMeta[]
+  cycleInheritance    CycleProjectInheritance[]
+
+  @@index([ownerId])
+  @@index([defaultIssueTypeId])
+  @@index([groupId])
+}
+
+model ProjectIssueType {
+  projectId   String
+  issueTypeId String
+  createdAt   DateTime @default(now())
+
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  issueType IssueType @relation(fields: [issueTypeId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, issueTypeId])
+  @@index([issueTypeId])
+}
+
+// ============================================================
+// ??�� (Role)
+// ============================================================
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  permissions String   @default("[]") // JSON array of permission strings
+  isSystem    Boolean  @default(false)
+  isDefault   Boolean  @default(false) // 자동 상속/추가 멤버에게 부여할 기본 역할(정확히 1개)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  projectMembers ProjectMember[]
+  groupMembers   ProjectGroupMember[]
+}
+
+// ============================================================
+// ?�로?�트 멤버 (Project Member)
+// ============================================================
+
+model ProjectMember {
+  id        String   @id @default(cuid())
+  projectId String
+  userId    String
+  roleId    String
+  // 멤버 출처: "direct"(직접 추가) | "group"(그룹 멤버십에서 상속/실체화).
+  source    String   @default("direct")
+  // 상속 원천 그룹 id (source="group"일 때). 정리/표시용 스칼라 컬럼(FK 없음).
+  groupId   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role    Role    @relation(fields: [roleId], references: [id])
+
+  @@unique([projectId, userId])
+  @@index([groupId])
+}
+
+model WorkItemComment {
+  id         String   @id @default(cuid())
+  workItemId String
+  body       String
+  mentions   String   @default("[]")
+  authorId   String?
+  createdAt  DateTime @default(now())
+
+  workItem WorkItem @relation(fields: [workItemId], references: [id], onDelete: Cascade)
+  author   User?    @relation(fields: [authorId], references: [id])
+
+  @@index([workItemId])
+}
+
+model WorkItemHistory {
+  id         String   @id @default(cuid())
+  workItemId String
+  field      String
+  before     String?
+  after      String?
+  actorId    String?
+  createdAt  DateTime @default(now())
+
+  workItem WorkItem @relation(fields: [workItemId], references: [id], onDelete: Cascade)
+  actor    User?    @relation(fields: [actorId], references: [id])
+
+  @@index([workItemId])
+}
+
+// ============================================================
+// 커스?� ?�드 �?(Work Item Field Value)
+// ============================================================
+
+model WorkItemFieldValue {
+  id         String @id @default(cuid())
+  workItemId String
+  fieldId    String
+  value      String // JSON string for flexible storage
+
+  workItem WorkItem @relation(fields: [workItemId], references: [id], onDelete: Cascade)
+  field    Field    @relation(fields: [fieldId], references: [id])
+
+  @@unique([workItemId, fieldId])
+}
+
+model FieldValue {
+  id         String @id @default(cuid())
+  objectType String @map("entityKind")
+  objectId   String
+  fieldId    String
+  value      String
+
+  field Field @relation(fields: [fieldId], references: [id])
+
+  @@unique([objectType, objectId, fieldId])
+  @@index([objectType, objectId])
+  @@index([fieldId, value])
+  @@map("LegacyFieldValue")
+}
+
+model EntityRecordFieldValue {
+  id             String @id @default(cuid())
+  entityRecordId String
+  fieldId        String
+  value          String
+
+  entityRecord WorkItem @relation(fields: [entityRecordId], references: [id], onDelete: Cascade)
+  field        Field    @relation(fields: [fieldId], references: [id])
+
+  @@unique([entityRecordId, fieldId])
+  @@index([fieldId, value])
+}
+
+model ObjectDef {
+  id            String    @id @default(cuid())
+  key           String    @unique
+  name          String
+  icon          String?
+  color         String?
+  fieldSchemaId String
+  isSystem      Boolean   @default(false)
+  deletedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  fieldSchema FieldSchema    @relation(fields: [fieldSchemaId], references: [id])
+  fields      Field[]
+  records     ObjectRecord[]
+
+  @@index([fieldSchemaId])
+  @@index([deletedAt])
+}
+
+model ObjectRecord {
+  id          String    @id @default(cuid())
+  objectDefId String
+  key         String
+  title       String
+  parentId    String?
+  sortOrder   Int       @default(0)
+  deletedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  objectDef   ObjectDef                @relation(fields: [objectDefId], references: [id], onDelete: Cascade)
+  parent      ObjectRecord?            @relation("ObjectRecordTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children    ObjectRecord[]           @relation("ObjectRecordTree")
+  fieldValues ObjectRecordFieldValue[]
+
+  @@unique([objectDefId, key])
+  @@index([objectDefId, sortOrder])
+  @@index([parentId])
+  @@index([deletedAt])
+}
+
+model ObjectRecordFieldValue {
+  id             String @id @default(cuid())
+  objectRecordId String
+  fieldId        String
+  value          String
+
+  objectRecord ObjectRecord @relation(fields: [objectRecordId], references: [id], onDelete: Cascade)
+  field        Field        @relation(fields: [fieldId], references: [id])
+
+  @@unique([objectRecordId, fieldId])
+  @@index([fieldId, value])
+}
+
+// ============================================================
+// Watch + Notification (v0.22.0)
+// ============================================================
+
+model WorkItemWatcher {
+  id         String   @id @default(cuid())
+  workItemId String
+  userId     String
+  source     String   @default("manual")
+  // "manual" | "auto_creator" | "auto_editor" | "auto_commenter"
+  // | "auto_assignee" | "auto_mention" | "added_by_other"
+  addedById  String?
+  createdAt  DateTime @default(now())
+
+  workItem WorkItem @relation(fields: [workItemId], references: [id], onDelete: Cascade)
+  user     User     @relation("WatcherUser", fields: [userId], references: [id], onDelete: Cascade)
+  addedBy  User?    @relation("WatcherAddedBy", fields: [addedById], references: [id], onDelete: SetNull)
+
+  @@unique([workItemId, userId])
+  @@index([userId])
+  @@index([workItemId])
+}
+
+model Notification {
+  id             String    @id @default(cuid())
+  recipientId    String
+  type           String // "mention" | "work_item_updated" | "work_item_commented" | "work_item_assigned" | "checklist_run_started" | "checklist_run_completed" | "checklist_run_canceled"
+  scope          String // "work_item" | "checklist" | "cycle"
+  actorId        String?
+  workItemId     String?
+  projectId      String?
+  checklistRunId String?
+  cycleId        String?
+  commentId      String?
+  payloadJson    String    @default("{}")
+  isRead         Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  readAt         DateTime?
+
+  recipient    User          @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  actor        User?         @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+  workItem     WorkItem?     @relation(fields: [workItemId], references: [id], onDelete: Cascade)
+  project      Project?      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  checklistRun ChecklistRun? @relation(fields: [checklistRunId], references: [id], onDelete: Cascade)
+  cycle        Cycle?        @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+
+  @@index([recipientId, isRead, createdAt])
+  @@index([recipientId, createdAt])
+  @@index([workItemId])
+  @@index([checklistRunId])
+  @@index([cycleId])
+}
+
+// ============================================================
+// Cycle / Sprint (v0.49.0)
+// ============================================================
+
+model Cycle {
+  id               String    @id @default(cuid())
+  issueTypeId      String
+  scope            String // "GROUP" | "PROJECT"
+  groupId          String?
+  projectId        String?
+  name             String
+  statusId         String?
+  startDate        DateTime?
+  endDate          DateTime?
+  inheritByDefault Boolean   @default(true)
+  ownerId          String?
+  creatorId        String?
+  updatedById      String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+
+  issueType     IssueType                 @relation(fields: [issueTypeId], references: [id])
+  group         ProjectGroup?             @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  project       Project?                  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  status        Status?                   @relation(fields: [statusId], references: [id], onDelete: SetNull)
+  owner         User?                     @relation("CycleOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  creator       User?                     @relation("CycleCreator", fields: [creatorId], references: [id], onDelete: SetNull)
+  updatedBy     User?                     @relation("CycleUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  comments      CycleComment[]
+  histories     CycleHistory[]
+  watchers      CycleWatcher[]
+  inheritance   CycleProjectInheritance[]
+  notifications Notification[]
+
+  @@index([issueTypeId])
+  @@index([projectId])
+  @@index([groupId])
+  @@index([scope])
+  @@index([statusId])
+  @@index([ownerId])
+  @@index([deletedAt])
+}
+
+model CycleProjectInheritance {
+  cycleId   String
+  projectId String
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cycle   Cycle   @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@id([cycleId, projectId])
+  @@index([projectId])
+}
+
+model CycleComment {
+  id        String   @id @default(cuid())
+  cycleId   String
+  body      String
+  mentions  String   @default("[]")
+  authorId  String?
+  createdAt DateTime @default(now())
+
+  cycle  Cycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  author User? @relation("CycleCommentAuthor", fields: [authorId], references: [id])
+
+  @@index([cycleId])
+}
+
+model CycleHistory {
+  id        String   @id @default(cuid())
+  cycleId   String
+  field     String
+  before    String?
+  after     String?
+  actorId   String?
+  createdAt DateTime @default(now())
+
+  cycle Cycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  actor User? @relation("CycleHistoryActor", fields: [actorId], references: [id])
+
+  @@index([cycleId])
+}
+
+model CycleWatcher {
+  id        String   @id @default(cuid())
+  cycleId   String
+  userId    String
+  source    String   @default("manual")
+  addedById String?
+  createdAt DateTime @default(now())
+
+  cycle   Cycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  user    User  @relation("CycleWatcherUser", fields: [userId], references: [id], onDelete: Cascade)
+  addedBy User? @relation("CycleWatcherAddedBy", fields: [addedById], references: [id], onDelete: SetNull)
+
+  @@unique([cycleId, userId])
+  @@index([userId])
+  @@index([cycleId])
+}
+
+model CycleRecordMeta {
+  entityRecordId   String  @id
+  scope            String
+  groupId          String?
+  projectId        String?
+  inheritByDefault Boolean @default(true)
+  ownerId          String?
+
+  entityRecord WorkItem      @relation(fields: [entityRecordId], references: [id], onDelete: Cascade)
+  group        ProjectGroup? @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  project      Project?      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  owner        User?         @relation("CycleRecordMetaOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+
+  @@index([scope])
+  @@index([groupId])
+  @@index([projectId])
+  @@index([ownerId])
+}
+
+// ============================================================
+// Project Group (v0.23.0)
+// ============================================================
+
+model ProjectGroup {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  ownerId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner           User                   @relation("GroupOwner", fields: [ownerId], references: [id])
+  projects        Project[]
+  members         ProjectGroupMember[]
+  activities      ProjectGroupActivity[]
+  cycles          Cycle[]
+  cycleRecordMeta CycleRecordMeta[]
+
+  @@index([ownerId])
+}
+
+model ProjectGroupMember {
+  id        String   @id @default(cuid())
+  groupId   String
+  userId    String
+  roleId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  group ProjectGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role  Role         @relation(fields: [roleId], references: [id])
+
+  @@unique([groupId, userId])
+  @@index([userId])
+}
+
+model UserProjectPreference {
+  id        String @id @default(cuid())
+  userId    String
+  projectId String
+  sortOrder Int    @default(0)
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, projectId])
+  @@index([userId])
+}
+
+// ============================================================
+// Checklist (v0.29.0)
+// ============================================================
+
+model Checklist {
+  id          String    @id @default(cuid())
+  projectId   String
+  title       String
+  description String?
+  createdById String
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  archivedAt  DateTime?
+
+  project   Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy User                 @relation("ChecklistCreatedBy", fields: [createdById], references: [id])
+  items     ChecklistItem[]
+  groups    ChecklistItemGroup[]
+  runs      ChecklistRun[]
+
+  @@index([projectId, archivedAt])
+  @@index([projectId, sortOrder])
+  @@index([createdById])
+}
+
+model ChecklistItemGroup {
+  id          String   @id @default(cuid())
+  checklistId String
+  name        String
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  checklist Checklist       @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  items     ChecklistItem[]
+
+  @@index([checklistId, sortOrder])
+}
+
+model ChecklistItem {
+  id          String   @id @default(cuid())
+  checklistId String
+  groupId     String?
+  content     String
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  checklist Checklist           @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  group     ChecklistItemGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  runItems  ChecklistRunItem[]
+
+  @@index([checklistId, sortOrder])
+  @@index([checklistId, groupId, sortOrder])
+}
+
+model ChecklistRun {
+  id            String    @id @default(cuid())
+  checklistId   String
+  status        String // "RUNNING" | "COMPLETED" | "CANCELED"
+  startedById   String
+  startedAt     DateTime  @default(now())
+  completedById String?
+  completedAt   DateTime?
+
+  checklist     Checklist           @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  startedBy     User                @relation("ChecklistRunStartedBy", fields: [startedById], references: [id])
+  completedBy   User?               @relation("ChecklistRunCompletedBy", fields: [completedById], references: [id])
+  items         ChecklistRunItem[]
+  events        ChecklistRunEvent[]
+  notifications Notification[]
+
+  @@index([checklistId, status])
+  @@index([checklistId, startedAt])
+  @@index([completedAt])
+}
+
+model ChecklistRunItem {
+  id             String    @id @default(cuid())
+  runId          String
+  sourceItemId   String?
+  content        String
+  sortOrder      Int       @default(0)
+  groupName      String?
+  groupSortOrder Int?
+  checked        Boolean   @default(false)
+  checkedById    String?
+  checkedAt      DateTime?
+
+  run        ChecklistRun   @relation(fields: [runId], references: [id], onDelete: Cascade)
+  sourceItem ChecklistItem? @relation(fields: [sourceItemId], references: [id], onDelete: SetNull)
+  checkedBy  User?          @relation("ChecklistRunItemCheckedBy", fields: [checkedById], references: [id], onDelete: SetNull)
+
+  @@index([runId, sortOrder])
+  @@index([runId, groupSortOrder, sortOrder])
+  @@index([sourceItemId])
+}
+
+model ChecklistRunEvent {
+  id        String   @id @default(cuid())
+  runId     String
+  itemId    String?
+  actorId   String
+  action    String // "START" | "CHECK" | "UNCHECK" | "COMPLETE" | "CANCEL" | "ITEM_EDIT"
+  payload   String?
+  createdAt DateTime @default(now())
+
+  run   ChecklistRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  actor User         @relation("ChecklistEventActor", fields: [actorId], references: [id])
+
+  @@index([runId, createdAt])
+}
+
+// ============================================================
+// Activity Log (v0.33.0)
+// ============================================================
+//
+// Project / ProjectGroup 단위 활동 로그. WorkItemHistory 가 일감 단위 변경 이력을 담당하는 것과 별개로,
+// 멤버 추가/제거/역할 변경, 프로젝트 설정 변경, 위키 페이지 생성/삭제, 체크리스트 생성/삭제, 일감 생성/삭제 등
+// 프로젝트(또는 그룹) 단위 사용자 가시 변경을 시간순으로 기록한다.
+//
+// kind 명명 규약: "<subject>.<action>" — e.g. "member.added", "settings.updated", "workitem.created".
+// payload 는 변경 전후 / 스냅샷 / 부가 컨텍스트를 담는 JSON 문자열 (free-form, kind 별 schema).
+
+model ProjectActivity {
+  id          String   @id @default(cuid())
+  projectId   String
+  actorId     String?
+  kind        String
+  subjectType String?
+  subjectId   String?
+  payload     String? // JSON
+  createdAt   DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  actor   User?   @relation("ProjectActivityActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([projectId, createdAt])
+  @@index([projectId, kind, createdAt])
+  @@index([actorId])
+}
+
+model ProjectGroupActivity {
+  id             String   @id @default(cuid())
+  projectGroupId String
+  actorId        String?
+  kind           String
+  subjectType    String?
+  subjectId      String?
+  payload        String? // JSON
+  createdAt      DateTime @default(now())
+
+  group ProjectGroup @relation(fields: [projectGroupId], references: [id], onDelete: Cascade)
+  actor User?        @relation("ProjectGroupActivityActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([projectGroupId, createdAt])
+  @@index([projectGroupId, kind, createdAt])
+  @@index([actorId])
+}

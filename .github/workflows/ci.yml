@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.20.1
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+        env:
+          TURSO_DATABASE_URL: libsql://build-placeholder.turso.io
+          TURSO_AUTH_TOKEN: build-placeholder
+          AUTH_SECRET: build-only-secret
+          DEMO_MODE: "true"
+          DEMO_READ_ONLY: "true"
+      - run: npm run scan:public

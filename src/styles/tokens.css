@@ -1,0 +1,146 @@
+/* ============================================================
+   디자인 토큰 (Design Tokens)
+   ============================================================ */
+
+:root {
+  /* 색상 - 시맨틱 */
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f9fafb;
+  --color-bg-tertiary: #f3f4f6;
+  --color-bg-hover: #f3f4f6;
+
+  --color-text-primary: #111827;
+  --color-text-secondary: #6b7280;
+  --color-text-tertiary: #9ca3af;
+  --color-text-inverse: #ffffff;
+
+  --color-border: #e5e7eb;
+  --color-border-hover: #d1d5db;
+
+  --color-accent: #3b82f6;
+  --color-accent-hover: #2563eb;
+  --color-accent-light: #eff6ff;
+
+  --color-danger: #ef4444;
+  --color-danger-light: #fef2f2;
+  --color-success: #22c55e;
+  --color-success-light: #f0fdf4;
+  --color-warning: #f59e0b;
+  --color-warning-light: #fffbeb;
+  --color-cat-member: #3b82f6;
+  --color-cat-settings: #f59e0b;
+  --color-cat-checklist: #8b5cf6;
+  --color-cat-workitem: #0ea5e9;
+  --color-cat-calendar: #f43f5e;
+  --color-cat-default: #9ca3af;
+
+  /* 간격 */
+  --space-0: 0;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* 타이포그래피 */
+  --font-sans: "Pretendard Variable", Pretendard, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "SFMono-Regular", Menlo, Consolas, monospace;
+
+  --text-3xs: 0.625rem;
+  --text-2xs: 0.6875rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.875rem;
+  --text-lg: 1rem;
+  --text-xl: 1.125rem;
+  --text-2xl: 1.375rem;
+  --line-micro: 1.2;
+  --line-tight: 1.35;
+  --line-normal: 1.5;
+
+  /* 둥근 모서리 */
+  --radius-2xs: 0.1875rem;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-full: 9999px;
+
+  /* Calendar styles */
+  --calendar-grid-gap: 1px;
+  --calendar-stack-gap: 0.125rem;
+  --calendar-cell-padding-compact: 0.25rem;
+  --calendar-cell-padding-comfortable: 0.375rem;
+  --calendar-entry-height-compact: 1rem;
+  --calendar-entry-height-comfortable: 1.125rem;
+  --calendar-entry-padding-x-compact: 0.3125rem;
+  --calendar-entry-padding-x-comfortable: 0.375rem;
+  --calendar-create-padding-x-compact: 0.375rem;
+  --calendar-create-padding-x-comfortable: 0.4375rem;
+  --calendar-month-cell-min-height-compact: 5.5rem;
+  /* cell min-height tokens removed — flex-1 rows now distribute height responsively */
+
+  /* 그림자 */
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+  --color-surface-sticky: #f9fafb;
+  --control-h-sm: 26px;
+  --control-h-md: 32px;
+
+  /* 사이드바 */
+  --sidebar-width: 15rem;
+  --sidebar-width-collapsed: 4rem;
+  --sidebar-current-width: var(--sidebar-width);
+  --topbar-height: 3rem;
+}
+
+/* ============================================================
+   다크 모드 토큰
+   ============================================================ */
+
+.dark {
+  --color-bg-primary: #0f172a;
+  --color-bg-secondary: #1e293b;
+  --color-bg-tertiary: #334155;
+  --color-bg-hover: #334155;
+
+  --color-text-primary: #f1f5f9;
+  --color-text-secondary: #94a3b8;
+  --color-text-tertiary: #64748b;
+  --color-text-inverse: #0f172a;
+
+  --color-border: #334155;
+  --color-border-hover: #475569;
+
+  --color-accent: #60a5fa;
+  --color-accent-hover: #3b82f6;
+  --color-accent-light: #1e293b;
+
+  --color-danger: #f87171;
+  --color-danger-light: #1e1215;
+  --color-success: #4ade80;
+  --color-success-light: #0f1d15;
+  --color-warning: #fbbf24;
+  --color-warning-light: #1d1a0f;
+  --color-cat-member: #60a5fa;
+  --color-cat-settings: #fbbf24;
+  --color-cat-checklist: #a78bfa;
+  --color-cat-workitem: #38bdf8;
+  --color-cat-calendar: #fb7185;
+  --color-cat-default: #64748b;
+
+  --color-surface-sticky: #1e293b;
+
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.2);
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+}
