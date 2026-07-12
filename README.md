@@ -4,6 +4,8 @@ TaskManager Demo is a read-only public showcase of a schema-driven production wo
 
 No real company, person, customer, project, or production record is included. Public visitors sign in through a one-click Viewer session and cannot mutate server data. The dataset is not reset automatically.
 
+Live demo: [taskmanager-demo-five.vercel.app](https://taskmanager-demo-five.vercel.app)
+
 ## Snapshot
 
 - Source service version at implementation start: `0.55.3`
@@ -51,4 +53,4 @@ npm run scan:public
 
 ## Version
 
-`0.56.0`
+`0.56.1`

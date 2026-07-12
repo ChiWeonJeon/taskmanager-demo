@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.56.1 - 2026-07-12
+
+- Published the live Vercel Hobby demo at `taskmanager-demo-five.vercel.app` with Turso in AWS Tokyo.
+- Recorded the production URL after verifying health, one-click login, AAA demo data, and read-only mutation enforcement.
+
 ## 0.56.0 - 2026-07-12
 
 - Started the independent public demo from the verified service snapshot at commit `3891d891714a3f219af232b43b9e039bb0f051d4`.
