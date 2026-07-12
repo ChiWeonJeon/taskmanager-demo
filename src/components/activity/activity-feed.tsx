@@ -18,6 +18,8 @@ import { FilterIcon } from "@/components/task/task-icons";
 import { Button } from "@/components/ui/button";
 import { StateBlock } from "@/components/ui/state-block";
 import { cn } from "@/lib/utils";
+import { trackAnalytics } from "@/lib/analytics";
+import type { AnalyticsWorkspaceScope } from "@/lib/analytics-core";
 
 interface ActivityActor {
   id: string;
@@ -84,6 +86,22 @@ export function ActivityFeed({ endpoint, scopeKey, title, description, hideHeade
     return known.map((k) => ({ value: k, label: (t.kinds as Record<string, string>)[k] ?? k }));
   }, [t]);
   const activeFilterCount = kindFilter ? 1 : 0;
+  const workspaceScope: AnalyticsWorkspaceScope = scopeKey.includes("project")
+    ? "project"
+    : scopeKey.includes("group")
+      ? "group"
+      : scopeKey.some((part) => part === "me" || part === "my")
+        ? "personal"
+        : "global";
+
+  const updateKindFilter = (nextKind: string) => {
+    if (nextKind === kindFilter) return;
+    setKindFilter(nextKind);
+    trackAnalytics("Activity Filter Changed", {
+      activity_kind: nextKind || "all",
+      workspace_scope: workspaceScope,
+    });
+  };
 
   const renderKindLabel = (kind: string): string => {
     const known = (t.kinds as Record<string, string>)[kind];
@@ -150,7 +168,7 @@ export function ActivityFeed({ endpoint, scopeKey, title, description, hideHeade
             {kindFilter && (
               <button
                 type="button"
-                onClick={() => setKindFilter("")}
+                onClick={() => updateKindFilter("")}
                 className="text-[length:var(--text-2xs)] text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text-primary)]"
               >
                 {messages.taskWorkspace.resetFilters}
@@ -159,7 +177,7 @@ export function ActivityFeed({ endpoint, scopeKey, title, description, hideHeade
           </div>
           <select
             value={kindFilter}
-            onChange={(event) => setKindFilter(event.target.value)}
+            onChange={(event) => updateKindFilter(event.target.value)}
             aria-label={t.filterByKind}
             className={cn("mt-2 w-full max-w-xs", featureToolbarSelectClass)}
           >

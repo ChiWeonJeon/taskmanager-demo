@@ -10,6 +10,7 @@
 6. Existing Turso migration files are immutable after application. The checksum runner must reject drift.
 7. Run lint, tests, build, and `scan:public` before commit or deployment.
 8. Keep `AGENTS.md` and `agent.md` synchronized.
+9. Analytics remains production-only and anonymous. Track only the 11 documented explicit events; never add autocapture, replay, identify/alias/People/reset calls, PII, work-item content, full URLs, query values, or raw filter values.
 
 ## Architecture
 
@@ -17,6 +18,9 @@
 - `src/components`: task, cycle, checklist, layout, and shared UI
 - `src/lib/db.ts`: Prisma libSQL adapter and production configuration guard
 - `src/lib/demo.ts`: demo identity and read-only flags
+- `src/lib/analytics-core.ts`: event catalog, route normalization, and property allowlists
+- `src/lib/analytics.ts`: production-only Mixpanel initialization, tracking, and local opt-out
+- `src/components/shared/analytics-provider.tsx`: route-change page measurement
 - `prisma/schema.prisma`: canonical data model
 - `prisma/seed.ts`: idempotent Project Aetherfall synthetic seed
 - `prisma/turso`: ordered remote migration SQL
@@ -26,4 +30,4 @@
 
 ## Deployment
 
-Vercel deploys `main`. Production requires `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`, `AUTH_SECRET`, `AUTH_URL`, `DEMO_MODE=true`, and `DEMO_READ_ONLY=true`. Database migrations and seeding are explicit operator actions and are never scheduled automatically.
+Vercel deploys `main`. Production requires `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`, `AUTH_SECRET`, `AUTH_URL`, `DEMO_MODE=true`, and `DEMO_READ_ONLY=true`. Anonymous analytics additionally uses `NEXT_PUBLIC_MIXPANEL_TOKEN` and `NEXT_PUBLIC_MIXPANEL_ENABLED=true` in Production only. Database migrations and seeding are explicit operator actions and are never scheduled automatically.

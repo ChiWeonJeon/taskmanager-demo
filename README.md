@@ -29,6 +29,7 @@ Live demo: [taskmanager-demo-five.vercel.app](https://taskmanager-demo-five.verc
 - Turso for hosted SQLite-compatible persistence
 - NextAuth JWT with a demo-only credentials provider
 - Vercel for build and hosting
+- Mixpanel Browser SDK for production-only anonymous product analytics
 
 ## Local setup
 
@@ -52,6 +53,28 @@ Open `http://localhost:3000`, select **Explore the AAA project**, and browse the
 
 Schema changes are generated against local SQLite. Turso SQL files live in `prisma/turso/` and are applied by a checksum-verified runner.
 
+## Anonymous analytics
+
+Analytics is a production-only, opt-out measurement of public demo visits and core exploration. Configure `NEXT_PUBLIC_MIXPANEL_TOKEN` and `NEXT_PUBLIC_MIXPANEL_ENABLED=true` only for the Vercel Production environment. Preview, CI, and local development remain no-op by default.
+
+Mixpanel's anonymous `$device_id` persists in same-origin browser local storage. It measures a browser profile, not a person: another device, browser, private window, or cleared storage is counted separately. The shared Demo Viewer account is never passed to `identify()`, `alias()`, People profiles, or `reset()`.
+
+The login page provides a browser-local opt-out. Opting out persists in local storage and stops future sends from that browser. Collection is immediate until the visitor opts out. IP enrichment, autocapture, session replay, full URLs, queries, referrers, task content, IDs, user data, email, and raw filter values are excluded.
+
+The explicit event catalog is limited to:
+
+- `Page Viewed`
+- `Demo Entered`
+- `Task Opened`
+- `Task View Mode Changed`
+- `Today Bucket Selected`
+- `Saved View Applied`
+- `Task Filter Applied`
+- `Task Sort Changed`
+- `Task Group Changed`
+- `Cycle Opened`
+- `Activity Filter Changed`
+
 ## Verification
 
 ```bash
@@ -64,4 +87,4 @@ npm run scan:public
 
 ## Version
 
-`0.57.0`
+`0.58.0`

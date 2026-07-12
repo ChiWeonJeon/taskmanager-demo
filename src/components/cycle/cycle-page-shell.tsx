@@ -19,6 +19,7 @@ import { useI18n } from "@/components/shared/locale-provider";
 import { PlusIcon, TrashTabIcon } from "@/components/task/task-icons";
 import { isFieldValuePresent, parseFieldOptions, parseStoredFieldValue } from "@/lib/field-schema";
 import { useToast } from "@/lib/toast";
+import { trackAnalytics } from "@/lib/analytics";
 
 interface CycleStatus {
   id: string;
@@ -338,6 +339,14 @@ export function CyclePageShell({ endpoint, queryKey, mode, referenceProjectId, r
     router.replace(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false });
   };
 
+  const trackCycleOpened = (cycle: CycleRecord, action: "detail" | "view_tasks") => {
+    trackAnalytics("Cycle Opened", {
+      cycle_name: cycle.name,
+      cycle_scope: cycle.scope === "GROUP" ? "group" : "project",
+      action,
+    });
+  };
+
   const handleCreate = (event: FormEvent) => {
     event.preventDefault();
     if (!name.trim()) return;
@@ -584,7 +593,10 @@ export function CyclePageShell({ endpoint, queryKey, mode, referenceProjectId, r
                   <div className="flex min-w-0 flex-col gap-3 md:flex-row md:items-center">
                     <button
                       type="button"
-                      onClick={() => setSelectedCycleId(cycle.id)}
+                      onClick={() => {
+                        trackCycleOpened(cycle, "detail");
+                        setSelectedCycleId(cycle.id);
+                      }}
                       className="min-w-0 flex-1 text-left"
                     >
                       <div className="flex min-w-0 items-center gap-2">
@@ -606,6 +618,7 @@ export function CyclePageShell({ endpoint, queryKey, mode, referenceProjectId, r
                     <div className="flex shrink-0 flex-wrap items-center gap-2">
                       <Link
                         href={`/all-tasks?cycle=${encodeURIComponent(cycle.id)}`}
+                        onClick={() => trackCycleOpened(cycle, "view_tasks")}
                         className="inline-flex h-8 items-center rounded-[var(--radius-md)] border border-[var(--color-border)] px-3 text-[length:var(--text-xs)] font-medium text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)]"
                       >
                         {copy.viewTasks}

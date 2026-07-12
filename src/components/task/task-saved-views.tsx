@@ -17,6 +17,8 @@ import {
   type TaskSavedViewDto,
 } from "@/lib/task-saved-view";
 import { cn } from "@/lib/utils";
+import { trackAnalytics } from "@/lib/analytics";
+import { workspaceScopeFromKey } from "@/lib/analytics-core";
 
 interface TaskSavedViewsProps {
   workspaceKey: string;
@@ -76,6 +78,15 @@ export function TaskSavedViews({
     mutations.setDefaultView.isPending ||
     mutations.clearDefaultView.isPending
   );
+
+  const applyViewFromUser = (view: TaskSavedViewDto) => {
+    onApplyView(view);
+    trackAnalytics("Saved View Applied", {
+      view_name: view.name,
+      target_mode: view.config.viewMode,
+      workspace_scope: workspaceScopeFromKey(workspaceKey),
+    });
+  };
 
   const openCreateForm = () => {
     setFormMode("create");
@@ -245,7 +256,7 @@ export function TaskSavedViews({
                         {view.isOwner && <span className={featureToolbarBadgeClass}>{copy.ownerBadge}</span>}
                       </div>
                     </div>
-                    <Button type="button" size="sm" variant={isActive ? "secondary" : "ghost"} onClick={() => onApplyView(view)} disabled={busy}>
+                    <Button type="button" size="sm" variant={isActive ? "secondary" : "ghost"} onClick={() => applyViewFromUser(view)} disabled={busy}>
                       {copy.apply}
                     </Button>
                   </div>
@@ -337,7 +348,7 @@ export function TaskSavedViews({
               <p className="truncate text-[length:var(--text-xs)] text-[var(--color-text-tertiary)]">{copy.dirtyDescription.replace("{name}", activeView.name)}</p>
             </div>
             <div className="flex shrink-0 flex-wrap gap-1.5">
-              <Button type="button" size="sm" variant="ghost" onClick={() => onApplyView(activeView)} disabled={busy}>
+              <Button type="button" size="sm" variant="ghost" onClick={() => applyViewFromUser(activeView)} disabled={busy}>
                 {copy.reset}
               </Button>
               <Button type="button" size="sm" variant="ghost" onClick={onClearActiveView} disabled={busy}>

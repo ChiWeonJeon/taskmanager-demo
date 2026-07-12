@@ -1,16 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/components/shared/locale-provider";
+import {
+  hasOptedOutAnalytics,
+  isAnalyticsConfigured,
+  optOutAnalytics,
+  trackAnalytics,
+} from "@/lib/analytics";
 
 export default function LoginPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [analyticsOptedOut, setAnalyticsOptedOut] = useState(false);
   const { messages } = useI18n();
+
+  useEffect(() => {
+    // Browser-local Mixpanel consent is external state and is only readable after mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setAnalyticsOptedOut(hasOptedOutAnalytics());
+  }, []);
 
   const startDemo = async () => {
     setIsSubmitting(true);
@@ -21,8 +34,14 @@ export default function LoginPage() {
       setIsSubmitting(false);
       return;
     }
+    trackAnalytics("Demo Entered", { entry_method: "one_click" });
     router.push("/today");
     router.refresh();
+  };
+
+  const stopAnalytics = () => {
+    optOutAnalytics();
+    setAnalyticsOptedOut(true);
   };
 
   return (
@@ -41,6 +60,20 @@ export default function LoginPage() {
       <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg-secondary)] p-4 text-sm text-[var(--color-text-secondary)]">
         {messages.demo.readOnlyNotice}
       </div>
+      {isAnalyticsConfigured() && (
+        <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg-secondary)] p-4 text-xs leading-5 text-[var(--color-text-secondary)]">
+          <p>{analyticsOptedOut ? messages.demo.analyticsOptedOut : messages.demo.analyticsNotice}</p>
+          {!analyticsOptedOut && (
+            <button
+              type="button"
+              onClick={stopAnalytics}
+              className="mt-2 font-medium text-[var(--color-accent)] underline-offset-2 hover:underline"
+            >
+              {messages.demo.analyticsOptOut}
+            </button>
+          )}
+        </div>
+      )}
       {error && <p className="text-center text-sm text-[var(--color-danger)]">{error}</p>}
       <Button type="button" className="w-full" onClick={startDemo} disabled={isSubmitting}>
         {isSubmitting ? messages.demo.entering : messages.demo.enter}

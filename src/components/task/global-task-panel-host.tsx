@@ -18,6 +18,8 @@ import type {
 } from "@/components/task/types";
 import { useToast } from "@/lib/toast";
 import { useI18n } from "@/components/shared/locale-provider";
+import { trackAnalytics } from "@/lib/analytics";
+import { routeMetadata } from "@/lib/analytics-core";
 
 function pathOwnsTaskPanel(pathname: string | null): boolean {
   if (!pathname) return false;
@@ -61,6 +63,7 @@ function TaskPanelBoundary({ taskId, pathname, searchParams }: BoundaryProps) {
   const { messages } = useI18n();
   const [open, setOpen] = useState(true);
   const erroredRef = useRef(false);
+  const trackedTaskRef = useRef<string | null>(null);
 
   const taskQuery = useQuery<WorkItemWithRelations>({
     queryKey: ["work-item-detail", taskId],
@@ -105,6 +108,17 @@ function TaskPanelBoundary({ taskId, pathname, searchParams }: BoundaryProps) {
 
   const task = taskQuery.data ?? null;
   const allTasks = useMemo<WorkItemWithRelations[]>(() => (task ? [task] : []), [task]);
+
+  useEffect(() => {
+    if (!task || trackedTaskRef.current === task.id) return;
+    trackedTaskRef.current = task.id;
+    trackAnalytics("Task Opened", {
+      issue_type: task.issueType.key ?? task.issueType.name,
+      project_key: task.project?.key ?? "none",
+      source_view: "deep_link",
+      workspace_scope: routeMetadata(pathname ?? "/").workspaceScope,
+    });
+  }, [pathname, task]);
 
   useEffect(() => {
     if (!taskQuery.error || erroredRef.current) return;

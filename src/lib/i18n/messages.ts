@@ -42,6 +42,9 @@ const enMessages = {
     enter: "Explore the AAA project",
     entering: "Opening demo...",
     badge: "Read-only public demo",
+    analyticsNotice: "This demo collects anonymous usage analytics by browser. It does not collect IP geolocation, input content, or session replays.",
+    analyticsOptOut: "Do not collect anonymous analytics",
+    analyticsOptedOut: "Anonymous usage analytics is disabled in this browser.",
   },
   nav: {
     home: "Home",
@@ -1996,6 +1999,9 @@ const koMessages: SharedMessages = mergeMessages(enMessages, {
     enter: "AAA 프로젝트 둘러보기",
     entering: "데모 여는 중...",
     badge: "읽기 전용 공개 데모",
+    analyticsNotice: "이 데모는 브라우저 단위의 익명 사용 통계를 수집합니다. IP 위치정보, 입력 내용, 세션 리플레이는 수집하지 않습니다.",
+    analyticsOptOut: "익명 분석 수집 안 함",
+    analyticsOptedOut: "이 브라우저에서는 익명 사용 통계를 수집하지 않습니다.",
   },
   nav: {
     home: "홈",
@@ -3967,6 +3973,9 @@ const jaMessages: SharedMessages = mergeMessages(enMessages, {
     enter: "AAAプロジェクトを見る",
     entering: "デモを開いています...",
     badge: "読み取り専用公開デモ",
+    analyticsNotice: "このデモではブラウザ単位の匿名利用統計を収集します。IP位置情報、入力内容、セッションリプレイは収集しません。",
+    analyticsOptOut: "匿名分析を収集しない",
+    analyticsOptedOut: "このブラウザでは匿名利用統計を収集しません。",
   },
   nav: {
     home: "ホーム",

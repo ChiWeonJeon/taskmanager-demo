@@ -118,6 +118,8 @@ import {
 } from "@/components/task/task-group-model";
 import { findReferenceOption, mergeReferenceOptions } from "@/lib/reference-options";
 import { cn } from "@/lib/utils";
+import { trackAnalytics } from "@/lib/analytics";
+import { workspaceScopeFromKey } from "@/lib/analytics-core";
 import { DEFAULT_TASK_COLUMN_WIDTHS, IssueTypeOption, ProjectOption, ResolvedProjectConfig, StatusOption, TaskColumnKey, TaskSubtaskProgress, UserOption, WorkItemUpdate, WorkItemWithRelations } from "@/components/task/types";
 
 const isReadOnlyDemo = process.env.NEXT_PUBLIC_DEMO_READ_ONLY === "true";
@@ -296,6 +298,7 @@ export function TaskWorkspace({
   const cleanAppliedViewIdRef = useRef<string | null>(null);
   const urlViewAppliedRef = useRef<string | null>(null);
   const defaultSavedViewAppliedRef = useRef(false);
+  const trackedTaskOpenRef = useRef<string | null>(null);
 
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const effectiveViewMode: ViewMode = todayMode ? "list" : viewMode;
@@ -314,6 +317,7 @@ export function TaskWorkspace({
   const [createTaskPreset, setCreateTaskPreset] = useState<{ title?: string; startDate?: string; dueDate?: string } | null>(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalState, setEditModalState] = useState<{ task: WorkItemWithRelations; targetIssueTypeId?: string } | null>(null);
+  const analyticsWorkspaceScope = workspaceScopeFromKey(savedViewsWorkspaceKey);
   const [filterCombinator, setFilterCombinator] = useState<FilterCombinator>(() => (searchParams?.get("combinator") === "OR" ? "OR" : "AND"));
   const [filterConditions, setFilterConditions] = useState<FilterCondition[]>(() => {
     const parsed = parseTaskFilters(searchParams?.get("filter"));
@@ -1257,6 +1261,21 @@ export function TaskWorkspace({
     [selectedTask, tasks]
   );
 
+  useEffect(() => {
+    if (!activeSelectedTask) {
+      trackedTaskOpenRef.current = null;
+      return;
+    }
+    if (trackedTaskOpenRef.current === activeSelectedTask.id) return;
+    trackedTaskOpenRef.current = activeSelectedTask.id;
+    trackAnalytics("Task Opened", {
+      issue_type: activeSelectedTask.issueType.key ?? activeSelectedTask.issueType.name,
+      project_key: activeSelectedTask.project?.key ?? "none",
+      source_view: effectiveViewMode,
+      workspace_scope: analyticsWorkspaceScope,
+    });
+  }, [activeSelectedTask, analyticsWorkspaceScope, effectiveViewMode]);
+
   // Auto-open the detail panel when the URL carries `?task=ID` — used by
   // notification deep links (render.ts:80) and issue mention chips. The URL is
   // an external-source-of-truth that legitimately drives React state here;
@@ -1371,6 +1390,7 @@ export function TaskWorkspace({
 
   const addFilterDraftCondition = () => {
     if (!filterDraftField || !canAddFilterDraft) return;
+    const nextConditionCount = filterConditions.length + 1;
     setFilterConditions((current) => [
       ...current,
       {
@@ -1381,14 +1401,31 @@ export function TaskWorkspace({
         value2: normalizedFilterDraftOperator === "between" ? filterDraftValue2 : undefined,
       },
     ]);
+    trackAnalytics("Task Filter Applied", {
+      field_key: filterDraftField,
+      operator: normalizedFilterDraftOperator,
+      condition_count: nextConditionCount,
+      workspace_scope: analyticsWorkspaceScope,
+    });
     resetFilterDraft();
   };
 
   const removeFilterCondition = (id: string) => {
+    const removed = filterConditions.find((condition) => condition.id === id);
     setFilterConditions((current) => current.filter((condition) => condition.id !== id));
+    if (removed) {
+      trackAnalytics("Task Filter Applied", {
+        field_key: removed.field,
+        operator: "removed",
+        condition_count: Math.max(0, filterConditions.length - 1),
+        workspace_scope: analyticsWorkspaceScope,
+      });
+    }
   };
 
   const resetFilters = () => {
+    const lockedCount = filterConditions.filter((condition) => condition.locked).length;
+    if (filterConditions.length === lockedCount && filterCombinator === "AND" && !filterMyTasks) return;
     setFilterConditions((current) => {
       const locked = current.filter((c) => c.locked);
       return locked;
@@ -1396,22 +1433,84 @@ export function TaskWorkspace({
     setFilterCombinator("AND");
     setFilterMyTasks(false);
     resetFilterDraft();
+    trackAnalytics("Task Filter Applied", {
+      field_key: "all",
+      operator: "reset",
+      condition_count: lockedCount,
+      workspace_scope: analyticsWorkspaceScope,
+    });
   };
 
   const addSortRule = () => {
-    setSortRules((current) => {
-      const used = new Set(current.map((rule) => rule.field));
-      const firstUnused = SORT_FIELDS.find((field) => !used.has(field));
-      return firstUnused ? [...current, createSortRule(firstUnused)] : current;
+    const used = new Set(sortRules.map((rule) => rule.field));
+    const firstUnused = SORT_FIELDS.find((field) => !used.has(field));
+    if (!firstUnused) return;
+    const nextRule = createSortRule(firstUnused);
+    setSortRules([...sortRules, nextRule]);
+    trackAnalytics("Task Sort Changed", {
+      field_key: nextRule.field,
+      direction: nextRule.direction,
+      rule_count: sortRules.length + 1,
+      workspace_scope: analyticsWorkspaceScope,
     });
   };
 
   const updateSortRule = (id: string, patch: Partial<Omit<SortRule, "id">>) => {
+    const currentRule = sortRules.find((rule) => rule.id === id);
+    if (!currentRule) return;
+    const nextRule = { ...currentRule, ...patch };
+    if (nextRule.field === currentRule.field && nextRule.direction === currentRule.direction) return;
     setSortRules((current) => current.map((rule) => rule.id === id ? { ...rule, ...patch } : rule));
+    trackAnalytics("Task Sort Changed", {
+      field_key: nextRule.field,
+      direction: nextRule.direction,
+      rule_count: sortRules.length,
+      workspace_scope: analyticsWorkspaceScope,
+    });
   };
 
   const removeSortRule = (id: string) => {
+    const removed = sortRules.find((rule) => rule.id === id);
     setSortRules((current) => current.filter((rule) => rule.id !== id));
+    if (removed) {
+      trackAnalytics("Task Sort Changed", {
+        field_key: removed.field,
+        direction: "removed",
+        rule_count: Math.max(0, sortRules.length - 1),
+        workspace_scope: analyticsWorkspaceScope,
+      });
+    }
+  };
+
+  const resetSortRules = () => {
+    if (sortRules.length === 0) return;
+    setSortRules([]);
+    trackAnalytics("Task Sort Changed", {
+      field_key: "all",
+      direction: "reset",
+      rule_count: 0,
+      workspace_scope: analyticsWorkspaceScope,
+    });
+  };
+
+  const updateGroupBy = (nextGroupBy: string | null) => {
+    if (groupBy === nextGroupBy) return;
+    setGroupBy(nextGroupBy);
+    trackAnalytics("Task Group Changed", {
+      field_key: nextGroupBy ?? groupBy ?? "none",
+      cleared: nextGroupBy === null,
+      workspace_scope: analyticsWorkspaceScope,
+    });
+  };
+
+  const updateTodayBucket = (nextBucket: TodayBucket) => {
+    if (todayBucket === nextBucket) return;
+    setTodayBucket(nextBucket);
+    trackAnalytics("Today Bucket Selected", {
+      bucket: nextBucket,
+      workspace_scope: analyticsWorkspaceScope,
+      my_tasks_only: forceMyTasks || filterMyTasks,
+    });
   };
 
   const moveSortRule = (id: string, offset: -1 | 1) => {
@@ -1536,7 +1635,18 @@ export function TaskWorkspace({
       : resolvedGanttRange);
   }, [customGanttRange.end, customGanttRange.start, ganttRangeMode, resolvedGanttRange]);
 
-  const updateViewMode = useCallback((nextMode: ViewMode) => {
+  const updateViewMode = useCallback((nextMode: ViewMode, shouldTrack = true) => {
+    if (nextMode === viewMode) {
+      if (nextMode === "gantt") prepareGanttRangeDraft();
+      return;
+    }
+    if (shouldTrack) {
+      trackAnalytics("Task View Mode Changed", {
+        from_mode: viewMode,
+        to_mode: nextMode,
+        workspace_scope: analyticsWorkspaceScope,
+      });
+    }
     setViewMode(nextMode);
     if (nextMode === "gantt") {
       prepareGanttRangeDraft();
@@ -1547,7 +1657,7 @@ export function TaskWorkspace({
     if (nextMode !== "list" && nextMode !== "grid") {
       setActiveToolPanel((current) => current === "group" ? null : current);
     }
-  }, [prepareGanttRangeDraft]);
+  }, [analyticsWorkspaceScope, prepareGanttRangeDraft, viewMode]);
 
   const openFullscreenView = (nextView: FullscreenView) => {
     setSelectedTask(null);
@@ -1589,7 +1699,7 @@ export function TaskWorkspace({
       visibility: { ...current.visibility, ...config.columns },
       order: normalizeColumnOrder(taskColumns.map((column) => column.id), config.columnOrder),
     }));
-    updateViewMode(config.viewMode);
+    updateViewMode(config.viewMode, false);
     if (config.ganttUnit) setGanttUnit(config.ganttUnit);
     if (config.calendarUnit) setCalendarUnit(config.calendarUnit);
     cleanAppliedViewIdRef.current = options?.cleanUrl ? view.id : null;
@@ -1648,7 +1758,7 @@ export function TaskWorkspace({
           </p>
           <button
             type="button"
-            onClick={() => setSortRules([])}
+            onClick={resetSortRules}
             disabled={sortRules.length === 0}
             className="text-[length:var(--text-2xs)] text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text-primary)] disabled:cursor-not-allowed disabled:opacity-40"
           >
@@ -1896,7 +2006,7 @@ export function TaskWorkspace({
               key={bucket.key}
               type="button"
               aria-pressed={todayBucket === bucket.key}
-              onClick={() => setTodayBucket(bucket.key)}
+              onClick={() => updateTodayBucket(bucket.key)}
               className={cn(
                 featureToolbarSegmentButtonClass,
                 "whitespace-nowrap !px-2 @[48rem]/toolbar-controls:!px-3",
@@ -2227,7 +2337,7 @@ export function TaskWorkspace({
             <span className="max-w-[14rem] truncate">{activeGroupLabel ?? messages.taskWorkspace.groupLabels.removedField}</span>
             <button
               type="button"
-              onClick={() => setGroupBy(null)}
+              onClick={() => updateGroupBy(null)}
               className="ml-0.5 grid h-4 w-4 place-items-center rounded-full text-[var(--color-text-tertiary)] transition-colors hover:bg-black/[0.06] hover:text-[var(--color-danger)]"
               aria-label={messages.taskWorkspace.groupPanel.clear}
             >
@@ -2549,7 +2659,7 @@ export function TaskWorkspace({
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => setSortRules([])}
+              onClick={resetSortRules}
               disabled={sortRules.length === 0}
               className="whitespace-nowrap rounded-[var(--radius-sm)] px-2 py-1 text-[length:var(--text-2xs)] text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] disabled:cursor-not-allowed disabled:opacity-40"
             >
@@ -2591,7 +2701,7 @@ export function TaskWorkspace({
         options={taskGroupOptions}
         groupBy={groupBy}
         onGroupChange={(nextGroupBy) => {
-          setGroupBy(nextGroupBy);
+          updateGroupBy(nextGroupBy);
           setActiveToolPanel(null);
         }}
         onClose={closeActivePanel}

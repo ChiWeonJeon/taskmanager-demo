@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.58.0 - 2026-07-13
+
+- Added production-only anonymous Mixpanel analytics with browser-local device identity and an explicit local opt-out.
+- Instrumented exactly 11 approved navigation and exploration events without autocapture, session replay, People profiles, IP geolocation, or user identification.
+- Normalized dynamic routes, stripped queries and sensitive content, and limited every event to an explicit property allowlist.
+- Added analytics unit coverage, multilingual consent copy, environment documentation, and public-demo operating guardrails.
+
 ## 0.57.0 - 2026-07-12
 
 - Expanded Project Aetherfall to 90 work items assigned across 12 synthetic production roles.

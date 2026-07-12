@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/shared/theme-provider";
 import { QueryProvider } from "@/components/shared/query-provider";
 import { LocaleProvider } from "@/components/shared/locale-provider";
 import { ToastContainer } from "@/components/ui/toast";
+import { AnalyticsProvider } from "@/components/shared/analytics-provider";
 import { LOCALE_COOKIE_NAME, normalizeLocale } from "@/lib/i18n/config";
 import { getServerMessages } from "@/lib/i18n/server";
 import "./globals.css";
@@ -47,12 +48,14 @@ export default async function RootLayout({
     <html lang={initialLocale} suppressHydrationWarning>
       <body className="antialiased">
         <LocaleProvider initialLocale={initialLocale}>
-          <SessionProvider>
-            <ThemeProvider>
-              <QueryProvider>{children}</QueryProvider>
-            </ThemeProvider>
-            <ToastContainer />
-          </SessionProvider>
+          <AnalyticsProvider>
+            <SessionProvider>
+              <ThemeProvider>
+                <QueryProvider>{children}</QueryProvider>
+              </ThemeProvider>
+              <ToastContainer />
+            </SessionProvider>
+          </AnalyticsProvider>
         </LocaleProvider>
       </body>
     </html>
