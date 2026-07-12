@@ -1,6 +1,6 @@
 {
   "name": "taskmanager-demo",
-  "version": "0.56.1",
+  "version": "0.57.0",
   "private": true,
   "packageManager": "npm@10.8.2",
   "scripts": {
@@ -14,6 +14,7 @@
     "db:migrate": "prisma migrate dev",
     "db:migrate:turso": "node scripts/turso-migrate.mjs",
     "db:seed": "tsx prisma/seed.ts",
+    "db:verify-demo": "tsx scripts/verify-demo-data.ts",
     "db:bootstrap-local": "prisma generate && TURSO_DATABASE_URL=file:./prisma/dev.db node scripts/turso-migrate.mjs && tsx prisma/seed.ts",
     "scan:public": "node scripts/check-public-demo-safety.mjs"
   },

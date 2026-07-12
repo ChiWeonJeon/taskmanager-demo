@@ -6,6 +6,15 @@ No real company, person, customer, project, or production record is included. Pu
 
 Live demo: [taskmanager-demo-five.vercel.app](https://taskmanager-demo-five.vercel.app)
 
+## Demo data coverage
+
+- 90 Story, Task, and Bug records across five production projects
+- 12 synthetic assignees spanning executive production, game direction, engineering, art, narrative, online, QA, cinematics, audio, platform, and release
+- Due-by-today, overdue, next-seven-day, unplanned, completed, and current-month calendar scenarios
+- 18 shared Saved Views across personal, studio, group, and project workspaces
+- 122 project/group activity entries across 22 timeline dates
+- Every work item assigned across Vertical Slice, First Playable, Alpha, Content Complete, Beta & Certification, or Gold Master
+
 ## Snapshot
 
 - Source service version at implementation start: `0.55.3`
@@ -38,7 +47,8 @@ Open `http://localhost:3000`, select **Explore the AAA project**, and browse the
 2. Set `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` locally.
 3. Run `npm run db:migrate:turso` once.
 4. Run `npm run db:seed` explicitly once.
-5. Configure the same credentials in Vercel with `AUTH_SECRET`, `AUTH_URL`, `DEMO_MODE=true`, and `DEMO_READ_ONLY=true`.
+5. Run `npm run db:verify-demo` to confirm feature-level coverage.
+6. Configure the same credentials in Vercel with `AUTH_SECRET`, `AUTH_URL`, `DEMO_MODE=true`, and `DEMO_READ_ONLY=true`.
 
 Schema changes are generated against local SQLite. Turso SQL files live in `prisma/turso/` and are applied by a checksum-verified runner.
 
@@ -47,10 +57,11 @@ Schema changes are generated against local SQLite. Turso SQL files live in `pris
 ```bash
 npm run lint
 npm test
+npm run db:verify-demo
 npm run build
 npm run scan:public
 ```
 
 ## Version
 
-`0.56.1`
+`0.57.0`

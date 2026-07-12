@@ -21,6 +21,7 @@
 - `prisma/seed.ts`: idempotent Project Aetherfall synthetic seed
 - `prisma/turso`: ordered remote migration SQL
 - `scripts/turso-migrate.mjs`: checksum-verified migration runner
+- `scripts/verify-demo-data.ts`: Today, Calendar, Saved View, Activity, assignee, and Cycle coverage guard
 - `vercel.json`: single-region Vercel configuration
 
 ## Deployment
