@@ -13,3 +13,4 @@
 - Verify every People update reuses the current `$device:` distinct ID, creates separate profiles for separate browser stores, and never merges devices or transmits account identifiers.
 - Verify login opt-out removes the full analytics disclosure block without rendering a confirmation sentence.
 - Verify `/mp/track/` forwards to Mixpanel US with `ip=0`, remains public without opening other routes, and never contains server-side event generation or persistence.
+- When calendar density or sizing changes, verify cells with overflow reserve space for `+N More` at desktop and mobile widths and that every `.calendar-entry-region` has `scrollHeight <= clientHeight`.

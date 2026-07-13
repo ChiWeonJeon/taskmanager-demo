@@ -16,9 +16,9 @@ import {
   type CalendarRowLayout,
   type CalendarSection,
   dateKey,
-  getHiddenEntryCountForDate,
   getLaneForDate,
   isToday,
+  resolveCalendarCellLaneVisibility,
   startOfDay,
 } from "@/components/task/task-calendar-layout";
 import {
@@ -485,7 +485,9 @@ export function CalendarSectionGrid({
         return;
       }
 
-      // n entries fit: n * entryHeight + (n-1) * stackGap <= availableHeight
+      // This is the total row capacity. Cells with hidden entries reserve one
+      // of these rows for the +N More control before rendering their lanes.
+      // n rows fit: n * entryHeight + (n-1) * stackGap <= availableHeight
       // n <= (availableHeight + stackGap) / (entryHeight + stackGap)
       const n = Math.floor((availableHeight + stackGap) / (entryHeight + stackGap));
       setDynamicEntryLimit(Math.max(1, n));
@@ -597,9 +599,12 @@ function CalendarGridCell({
   sectionVariant: CalendarDisplayUnit;
 }) {
   const dateValue = dateKey(cell.date);
-  const visibleLaneCount = Math.min(rowLayout.laneCount, visibleEntryLimit);
+  const { visibleLaneCount, hiddenEntryCount } = resolveCalendarCellLaneVisibility(
+    rowLayout,
+    dateValue,
+    visibleEntryLimit,
+  );
   const visibleLaneIndexes = Array.from({ length: visibleLaneCount }, (_, index) => index);
-  const hiddenEntryCount = getHiddenEntryCountForDate(rowLayout, dateValue, visibleEntryLimit);
   const isDropTarget = dropDateKey === dateValue;
   const canCreateAtDate = Boolean(onCreateTaskAtDate && !dragTaskId);
   const handleCellClick = canCreateAtDate

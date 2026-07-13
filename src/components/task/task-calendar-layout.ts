@@ -401,3 +401,21 @@ export function getHiddenEntryCountForDate(rowLayout: CalendarRowLayout, dateVal
 
   return hiddenCount;
 }
+
+export function resolveCalendarCellLaneVisibility(
+  rowLayout: CalendarRowLayout,
+  dateValue: string,
+  rowCapacity: number,
+) {
+  const normalizedCapacity = Math.max(0, Math.floor(rowCapacity));
+  const hiddenAtFullCapacity = getHiddenEntryCountForDate(rowLayout, dateValue, normalizedCapacity);
+  const visibleLaneCount = Math.min(
+    rowLayout.laneCount,
+    hiddenAtFullCapacity > 0 ? Math.max(0, normalizedCapacity - 1) : normalizedCapacity,
+  );
+
+  return {
+    visibleLaneCount,
+    hiddenEntryCount: getHiddenEntryCountForDate(rowLayout, dateValue, visibleLaneCount),
+  };
+}

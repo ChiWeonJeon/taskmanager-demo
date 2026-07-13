@@ -91,4 +91,4 @@ npm run scan:public
 
 ## Version
 
-`0.58.3`
+`0.58.4`

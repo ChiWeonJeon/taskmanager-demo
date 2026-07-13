@@ -13,3 +13,5 @@ Production analytics posts to the same-origin `/mp/*` path. `vercel.json` forwar
 The People profile allowlist is `$name` (synthetic `Demo Browser XXXXXX`), `profile_type`, `identity_scope`, `app_version`, `locale`, `demo_mode`, and `read_only`. `identify()` may only receive the already persisted `$device:` distinct ID so profile updates are flushed without introducing a known ID or merging devices. The shared Demo Viewer ID and all account or task data are forbidden.
 
 The login disclosure is rendered only while browser analytics is active. Opt-out deletes the anonymous profile, persists suppression in local storage, and removes the disclosure block without showing a replacement confirmation message.
+
+Calendar month and week layouts measure the available row capacity with `ResizeObserver`. `resolveCalendarCellLaneVisibility` treats that capacity as the combined budget for task lanes and the `+N More` control, reserving one row whenever a cell contains hidden entries. The overflow label is constrained to one line so longer localized copy cannot exceed the cell height on mobile.

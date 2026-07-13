@@ -36,6 +36,7 @@ test("calendar density styles stay in globals and tokens", () => {
   assert.ok(globalsSource.includes(".calendar-entry-chip"));
   assert.ok(globalsSource.includes(".calendar-date-button"));
   assert.ok(globalsSource.includes(".calendar-entry-bridge-left"));
+  assert.match(globalsSource, /\.calendar-more-button \{[\s\S]*?white-space: nowrap;/);
   assert.ok(globalsSource.includes('[data-display-unit="day"]'));
   assert.ok(!globalsSource.includes("calendar-create-chip"));
   assert.ok(!globalsSource.includes("calendar-create-button"));

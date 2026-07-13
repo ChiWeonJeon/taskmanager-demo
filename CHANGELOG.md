@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.58.4 - 2026-07-13
+
+- Fixed clipped calendar cell content on mobile and desktop by reserving a measured row for the `+N More` overflow control and preventing its localized label from wrapping.
+- Added focused layout coverage for overflowing, exact-fit, and single-row calendar cells.
+
 ## 0.58.3 - 2026-07-13
 
 - Removed the post-opt-out analytics confirmation copy from the login screen in every locale.
