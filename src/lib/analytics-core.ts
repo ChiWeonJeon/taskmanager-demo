@@ -16,6 +16,8 @@ export type AnalyticsEventName = (typeof ANALYTICS_EVENTS)[number];
 export type AnalyticsWorkspaceScope = "personal" | "global" | "project" | "group" | "other";
 export type AnalyticsViewMode = "list" | "grid" | "kanban" | "gantt" | "calendar" | "deep_link";
 
+const MIXPANEL_DEVICE_ID_PREFIX = "$device:";
+
 const COMMON_PROPERTY_KEYS = ["route_template", "workspace_scope"] as const;
 
 export const ANALYTICS_EVENT_PROPERTY_KEYS: Record<AnalyticsEventName, readonly string[]> = {
@@ -97,6 +99,16 @@ export interface AnalyticsRouteMetadata {
 
 export function isAnalyticsEnabled(enabledValue: string | undefined, tokenValue: string | undefined): boolean {
   return enabledValue === "true" && Boolean(tokenValue?.trim());
+}
+
+export function anonymousBrowserProfileName(distinctId: string): string | null {
+  if (!distinctId.startsWith(MIXPANEL_DEVICE_ID_PREFIX)) return null;
+  const suffix = distinctId
+    .slice(MIXPANEL_DEVICE_ID_PREFIX.length)
+    .replaceAll(/[^a-zA-Z0-9]/g, "")
+    .slice(-6)
+    .toUpperCase();
+  return suffix ? `Demo Browser ${suffix}` : null;
 }
 
 const STATIC_PAGE_NAMES: Record<string, string> = {

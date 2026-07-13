@@ -10,7 +10,7 @@
 6. Existing Turso migration files are immutable after application. The checksum runner must reject drift.
 7. Run lint, tests, build, and `scan:public` before commit or deployment.
 8. Keep `AGENTS.md` and `agent.md` synchronized.
-9. Analytics remains production-only and anonymous. Track only the 11 documented explicit events; never add autocapture, replay, identify/alias/People/reset calls, PII, work-item content, full URLs, query values, or raw filter values.
+9. Analytics remains production-only and browser-anonymous. Track only the 11 documented explicit product events; never add autocapture, replay, alias/reset calls, PII, work-item content, full URLs, query values, or raw filter values. People profiles may use only the unchanged current `$device:` distinct ID and the documented synthetic property allowlist; never identify with the shared Viewer or merge browsers.
 
 ## Architecture
 
@@ -19,7 +19,7 @@
 - `src/lib/db.ts`: Prisma libSQL adapter and production configuration guard
 - `src/lib/demo.ts`: demo identity and read-only flags
 - `src/lib/analytics-core.ts`: event catalog, route normalization, and property allowlists
-- `src/lib/analytics.ts`: production-only Mixpanel initialization, tracking, and local opt-out
+- `src/lib/analytics.ts`: production-only Mixpanel initialization, browser-scoped People profile, tracking, and local opt-out/profile deletion
 - `src/components/shared/analytics-provider.tsx`: route-change page measurement
 - `vercel.json`: Seoul runtime placement and same-origin forwarding to Mixpanel US ingestion
 - `prisma/schema.prisma`: canonical data model

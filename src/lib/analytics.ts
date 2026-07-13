@@ -3,6 +3,7 @@
 import mixpanel from "mixpanel-browser";
 import {
   ANALYTICS_EVENTS,
+  anonymousBrowserProfileName,
   isAnalyticsEnabled,
   routeMetadata,
   sanitizeEventProperties,
@@ -24,6 +25,26 @@ const sensitiveDefaultProperties = [
 ];
 
 let initialized = false;
+
+function syncAnonymousBrowserProfile(locale: string): void {
+  if (mixpanel.has_opted_out_tracking({ persistence_type: "localStorage" })) return;
+  const distinctId = String(mixpanel.get_distinct_id() ?? "");
+  const profileName = anonymousBrowserProfileName(distinctId);
+  if (!profileName) return;
+
+  // Reusing the current $device: distinct ID enables People updates without
+  // introducing a shared viewer identity, merging devices, or emitting $identify.
+  mixpanel.identify(distinctId);
+  mixpanel.people.set({
+    $name: profileName,
+    profile_type: "anonymous_demo_browser",
+    identity_scope: "browser_local_storage",
+    app_version: process.env.NEXT_PUBLIC_APP_VERSION ?? "unknown",
+    locale: locale.slice(0, 16),
+    demo_mode: true,
+    read_only: true,
+  });
+}
 
 export function isAnalyticsConfigured(): boolean {
   return enabled;
@@ -69,6 +90,7 @@ export function setAnalyticsContext(locale: string): void {
     demo_mode: true,
     read_only: true,
   });
+  syncAnonymousBrowserProfile(locale);
 }
 
 export function trackAnalytics<Event extends AnalyticsEventName>(
@@ -86,7 +108,7 @@ export function trackAnalytics<Event extends AnalyticsEventName>(
 
 export function optOutAnalytics(): void {
   if (!initializeAnalytics()) return;
-  mixpanel.opt_out_tracking({ delete_user: false });
+  mixpanel.opt_out_tracking({ delete_user: true });
 }
 
 export function hasOptedOutAnalytics(): boolean {

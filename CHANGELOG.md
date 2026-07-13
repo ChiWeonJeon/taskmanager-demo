@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.58.2 - 2026-07-13
+
+- Added a minimal Mixpanel People profile for each anonymous browser so the Users view can display browser-scoped visitors without real names, emails, account IDs, or cross-device merging.
+- Reused the existing persisted `$device:` distinct ID when enabling People updates, preserving the current browser-local unique-user model and avoiding shared Demo Viewer identification.
+- Updated analytics disclosure and opt-out behavior so opting out also deletes the anonymous browser profile.
+- Added coverage for device-only profile naming, profile-property restrictions, and forbidden shared identity paths.
+
 ## 0.58.1 - 2026-07-13
 
 - Routed browser analytics through a public same-origin Vercel rewrite to Mixpanel's US ingestion endpoint so common content blockers do not discard demo telemetry.

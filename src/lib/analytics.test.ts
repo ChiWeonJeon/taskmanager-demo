@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import {
   ANALYTICS_EVENTS,
+  anonymousBrowserProfileName,
   isAnalyticsEnabled,
   routeMetadata,
   safeReferrerHost,
@@ -33,6 +34,12 @@ test("analytics is a no-op unless both production browser settings are present",
   assert.equal(isAnalyticsEnabled("false", "token"), false);
   assert.equal(isAnalyticsEnabled("true", ""), false);
   assert.equal(isAnalyticsEnabled("true", "token"), true);
+});
+
+test("anonymous browser profiles use only the persisted Mixpanel device id", () => {
+  assert.equal(anonymousBrowserProfileName("$device:5038fc3e-fa3a-4ffa-9cb7-35574249624c"), "Demo Browser 49624C");
+  assert.equal(anonymousBrowserProfileName("shared-demo-viewer"), null);
+  assert.equal(anonymousBrowserProfileName("$device:"), null);
 });
 
 test("analytics sends only the approved properties for each event", () => {
@@ -91,7 +98,7 @@ test("analytics properties keep primitives, truncate text, and drop empty values
   });
 });
 
-test("browser analytics implementation stays explicit, anonymous, and disabled by default", async () => {
+test("browser analytics implementation stays explicit, browser-scoped, and disabled by default", async () => {
   const source = await readFile(new URL("./analytics.ts", import.meta.url), "utf8");
   assert.match(source, /NEXT_PUBLIC_MIXPANEL_ENABLED/);
   assert.match(source, /autocapture: false/);
@@ -99,10 +106,15 @@ test("browser analytics implementation stays explicit, anonymous, and disabled b
   assert.match(source, /record_sessions_percent: 0/);
   assert.match(source, /ip: false/);
   assert.match(source, /window\.location\.origin}\/mp/);
-  assert.doesNotMatch(source, /\.identify\s*\(/);
+  assert.match(source, /mixpanel\.identify\(distinctId\)/);
+  assert.match(source, /mixpanel\.people\.set\(/);
+  assert.match(source, /profile_type: "anonymous_demo_browser"/);
+  assert.match(source, /identity_scope: "browser_local_storage"/);
+  assert.match(source, /opt_out_tracking\(\{ delete_user: true \}\)/);
+  assert.doesNotMatch(source, /identify\([^)]*(viewer|user|email)/i);
   assert.doesNotMatch(source, /\.alias\s*\(/);
-  assert.doesNotMatch(source, /\.people\b/);
   assert.doesNotMatch(source, /\.reset\s*\(/);
+  assert.doesNotMatch(source, /\$email|\bemail\s*:|user_id|viewer_id/i);
 });
 
 test("production analytics uses a public same-origin rewrite to Mixpanel US ingestion", async () => {
