@@ -34,7 +34,7 @@ export function initializeAnalytics(): boolean {
   if (initialized) return true;
 
   mixpanel.init(token, {
-    api_host: "https://api-js.mixpanel.com",
+    api_host: `${window.location.origin}/mp`,
     persistence: "localStorage",
     autocapture: false,
     track_pageview: false,

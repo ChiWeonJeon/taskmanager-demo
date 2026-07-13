@@ -21,6 +21,7 @@
 - `src/lib/analytics-core.ts`: event catalog, route normalization, and property allowlists
 - `src/lib/analytics.ts`: production-only Mixpanel initialization, tracking, and local opt-out
 - `src/components/shared/analytics-provider.tsx`: route-change page measurement
+- `vercel.json`: Seoul runtime placement and same-origin forwarding to Mixpanel US ingestion
 - `prisma/schema.prisma`: canonical data model
 - `prisma/seed.ts`: idempotent Project Aetherfall synthetic seed
 - `prisma/turso`: ordered remote migration SQL
@@ -31,3 +32,5 @@
 ## Deployment
 
 Vercel deploys `main`. Production requires `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`, `AUTH_SECRET`, `AUTH_URL`, `DEMO_MODE=true`, and `DEMO_READ_ONLY=true`. Anonymous analytics additionally uses `NEXT_PUBLIC_MIXPANEL_TOKEN` and `NEXT_PUBLIC_MIXPANEL_ENABLED=true` in Production only. Database migrations and seeding are explicit operator actions and are never scheduled automatically.
+
+The public `/mp/*` rewrite may only forward browser-created analytics payloads to `https://api.mixpanel.com/*`. It must not enrich, persist, or generate server-side events, and DNT/opt-out behavior must stay in the browser SDK.

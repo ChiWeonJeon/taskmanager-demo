@@ -58,7 +58,10 @@ export const authConfig: NextAuthConfig = {
       const { pathname } = request.nextUrl;
       const isApi = pathname.startsWith("/api/");
       const errors = EDGE_ERRORS[resolveEdgeLocale(request)];
-      const isPublic = pathname === "/login" || pathname.startsWith("/api/auth") || pathname === "/api/health";
+      const isPublic = pathname === "/login"
+        || pathname.startsWith("/api/auth")
+        || pathname === "/api/health"
+        || pathname.startsWith("/mp/");
 
       if (isPublic) {
         if (auth?.user && pathname === "/login") return Response.redirect(new URL("/today", request.nextUrl));

@@ -98,8 +98,20 @@ test("browser analytics implementation stays explicit, anonymous, and disabled b
   assert.match(source, /track_pageview: false/);
   assert.match(source, /record_sessions_percent: 0/);
   assert.match(source, /ip: false/);
+  assert.match(source, /window\.location\.origin}\/mp/);
   assert.doesNotMatch(source, /\.identify\s*\(/);
   assert.doesNotMatch(source, /\.alias\s*\(/);
   assert.doesNotMatch(source, /\.people\b/);
   assert.doesNotMatch(source, /\.reset\s*\(/);
+});
+
+test("production analytics uses a public same-origin rewrite to Mixpanel US ingestion", async () => {
+  const vercelConfig = JSON.parse(await readFile(new URL("../../vercel.json", import.meta.url), "utf8"));
+  assert.deepEqual(vercelConfig.rewrites, [{
+    source: "/mp/:path*",
+    destination: "https://api.mixpanel.com/:path*",
+  }]);
+
+  const authSource = await readFile(new URL("./auth.config.ts", import.meta.url), "utf8");
+  assert.match(authSource, /pathname\.startsWith\("\/mp\/"\)/);
 });

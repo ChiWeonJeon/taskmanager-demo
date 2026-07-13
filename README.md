@@ -59,6 +59,8 @@ Analytics is a production-only, opt-out measurement of public demo visits and co
 
 Mixpanel's anonymous `$device_id` persists in same-origin browser local storage. It measures a browser profile, not a person: another device, browser, private window, or cleared storage is counted separately. The shared Demo Viewer account is never passed to `identify()`, `alias()`, People profiles, or `reset()`.
 
+Browser events use the same-origin `/mp/*` path, which Vercel rewrites to Mixpanel's US ingestion API. The application still creates events exclusively in the browser; the rewrite only forwards the existing sanitized payload and does not add server-side events. Browser DNT and the local opt-out remain authoritative.
+
 The login page provides a browser-local opt-out. Opting out persists in local storage and stops future sends from that browser. Collection is immediate until the visitor opts out. IP enrichment, autocapture, session replay, full URLs, queries, referrers, task content, IDs, user data, email, and raw filter values are excluded.
 
 The explicit event catalog is limited to:
@@ -87,4 +89,4 @@ npm run scan:public
 
 ## Version
 
-`0.58.0`
+`0.58.1`

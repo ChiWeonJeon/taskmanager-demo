@@ -7,3 +7,5 @@ The primary product areas are work items, projects and groups, cycles, checklist
 `scripts/verify-demo-data.ts` is the seed coverage guard. It checks Today buckets, current-month Calendar density, Saved View scopes and modes, Activity timeline breadth, assignee distribution, comments/history, and Cycle references against the active local or Turso database.
 
 Anonymous browser analytics is isolated in `src/lib/analytics-core.ts`, `src/lib/analytics.ts`, and `src/components/shared/analytics-provider.tsx`. The core module owns the exact 11-event catalog, dynamic route templates, workspace scope derivation, and per-event property allowlists. The browser module initializes Mixpanel only when both public production variables are present and owns the persistent local opt-out. Feature components emit events only after successful, distinct UI state changes.
+
+Production analytics posts to the same-origin `/mp/*` path. `vercel.json` forwards that path unchanged to Mixpanel's US ingestion API, while `src/lib/auth.config.ts` keeps only this forwarding path public. The rewrite does not create, enrich, or store events.

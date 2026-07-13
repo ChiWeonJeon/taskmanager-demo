@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.58.1 - 2026-07-13
+
+- Routed browser analytics through a public same-origin Vercel rewrite to Mixpanel's US ingestion endpoint so common content blockers do not discard demo telemetry.
+- Kept event creation in the browser and preserved DNT, local opt-out, IP suppression, explicit event allowlists, and the no-identify/no-replay policy.
+- Added coverage for the proxy destination and unauthenticated ingestion path.
+
 ## 0.58.0 - 2026-07-13
 
 - Added production-only anonymous Mixpanel analytics with browser-local device identity and an explicit local opt-out.
