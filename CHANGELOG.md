@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.58.3 - 2026-07-13
+
+- Removed the post-opt-out analytics confirmation copy from the login screen in every locale.
+- Hid the complete analytics disclosure block after browser-local opt-out while preserving profile deletion and tracking suppression.
+- Added coverage preventing the removed confirmation message from returning.
+
 ## 0.58.2 - 2026-07-13
 
 - Added a minimal Mixpanel People profile for each anonymous browser so the Users view can display browser-scoped visitors without real names, emails, account IDs, or cross-device merging.

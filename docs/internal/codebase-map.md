@@ -11,3 +11,5 @@ Anonymous browser analytics is isolated in `src/lib/analytics-core.ts`, `src/lib
 Production analytics posts to the same-origin `/mp/*` path. `vercel.json` forwards that path unchanged to Mixpanel's US ingestion API, while `src/lib/auth.config.ts` keeps only this forwarding path public. The rewrite does not create, enrich, or store events.
 
 The People profile allowlist is `$name` (synthetic `Demo Browser XXXXXX`), `profile_type`, `identity_scope`, `app_version`, `locale`, `demo_mode`, and `read_only`. `identify()` may only receive the already persisted `$device:` distinct ID so profile updates are flushed without introducing a known ID or merging devices. The shared Demo Viewer ID and all account or task data are forbidden.
+
+The login disclosure is rendered only while browser analytics is active. Opt-out deletes the anonymous profile, persists suppression in local storage, and removes the disclosure block without showing a replacement confirmation message.

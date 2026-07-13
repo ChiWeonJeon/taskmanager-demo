@@ -44,7 +44,6 @@ const enMessages = {
     badge: "Read-only public demo",
     analyticsNotice: "This demo creates an anonymous browser profile for usage analytics. It does not collect IP geolocation, input content, personal details, or session replays.",
     analyticsOptOut: "Do not collect anonymous analytics",
-    analyticsOptedOut: "Anonymous analytics is disabled and its browser profile is removed.",
   },
   nav: {
     home: "Home",
@@ -2001,7 +2000,6 @@ const koMessages: SharedMessages = mergeMessages(enMessages, {
     badge: "읽기 전용 공개 데모",
     analyticsNotice: "이 데모는 사용 통계를 위해 브라우저 단위의 익명 프로필을 생성합니다. IP 위치정보, 입력 내용, 개인정보, 세션 리플레이는 수집하지 않습니다.",
     analyticsOptOut: "익명 분석 수집 안 함",
-    analyticsOptedOut: "익명 분석이 중지되고 이 브라우저의 프로필이 삭제되었습니다.",
   },
   nav: {
     home: "홈",
@@ -3975,7 +3973,6 @@ const jaMessages: SharedMessages = mergeMessages(enMessages, {
     badge: "読み取り専用公開デモ",
     analyticsNotice: "このデモでは利用統計のためにブラウザ単位の匿名プロフィールを作成します。IP位置情報、入力内容、個人情報、セッションリプレイは収集しません。",
     analyticsOptOut: "匿名分析を収集しない",
-    analyticsOptedOut: "匿名分析を停止し、このブラウザのプロフィールを削除しました。",
   },
   nav: {
     home: "ホーム",

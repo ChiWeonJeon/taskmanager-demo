@@ -1,6 +1,6 @@
 {
   "name": "taskmanager-demo",
-  "version": "0.58.2",
+  "version": "0.58.3",
   "private": true,
   "packageManager": "npm@10.8.2",
   "scripts": {

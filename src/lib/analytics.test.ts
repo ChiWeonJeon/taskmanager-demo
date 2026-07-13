@@ -127,3 +127,11 @@ test("production analytics uses a public same-origin rewrite to Mixpanel US inge
   const authSource = await readFile(new URL("./auth.config.ts", import.meta.url), "utf8");
   assert.match(authSource, /pathname\.startsWith\("\/mp\/"\)/);
 });
+
+test("the login disclosure disappears after browser analytics opt-out", async () => {
+  const loginSource = await readFile(new URL("../app/(auth)/login/page.tsx", import.meta.url), "utf8");
+  const messagesSource = await readFile(new URL("./i18n/messages.ts", import.meta.url), "utf8");
+  assert.match(loginSource, /isAnalyticsConfigured\(\) && !analyticsOptedOut/);
+  assert.doesNotMatch(loginSource, /messages\.demo\.analyticsOptedOut/);
+  assert.doesNotMatch(messagesSource, /analyticsOptedOut:/);
+});

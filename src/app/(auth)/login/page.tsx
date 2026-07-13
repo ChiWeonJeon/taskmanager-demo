@@ -60,18 +60,16 @@ export default function LoginPage() {
       <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg-secondary)] p-4 text-sm text-[var(--color-text-secondary)]">
         {messages.demo.readOnlyNotice}
       </div>
-      {isAnalyticsConfigured() && (
+      {isAnalyticsConfigured() && !analyticsOptedOut && (
         <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg-secondary)] p-4 text-xs leading-5 text-[var(--color-text-secondary)]">
-          <p>{analyticsOptedOut ? messages.demo.analyticsOptedOut : messages.demo.analyticsNotice}</p>
-          {!analyticsOptedOut && (
-            <button
-              type="button"
-              onClick={stopAnalytics}
-              className="mt-2 font-medium text-[var(--color-accent)] underline-offset-2 hover:underline"
-            >
-              {messages.demo.analyticsOptOut}
-            </button>
-          )}
+          <p>{messages.demo.analyticsNotice}</p>
+          <button
+            type="button"
+            onClick={stopAnalytics}
+            className="mt-2 font-medium text-[var(--color-accent)] underline-offset-2 hover:underline"
+          >
+            {messages.demo.analyticsOptOut}
+          </button>
         </div>
       )}
       {error && <p className="text-center text-sm text-[var(--color-danger)]">{error}</p>}
