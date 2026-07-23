@@ -10,7 +10,7 @@
 6. Existing Turso migration files are immutable after application. The checksum runner must reject drift.
 7. Run lint, tests, build, and `scan:public` before commit or deployment.
 8. Keep `AGENTS.md` and `agent.md` synchronized.
-9. Analytics remains production-only and browser-anonymous. Track only the 11 documented explicit product events; never add autocapture, replay, alias/reset calls, PII, work-item content, full URLs, query values, or raw filter values. People profiles may use only the unchanged current `$device:` distinct ID and the documented synthetic property allowlist; never identify with the shared Viewer or merge browsers.
+9. Analytics remains production-only and allowlisted. Browser analytics tracks only the 11 documented UI events and never adds autocapture, replay, alias/reset calls, PII, work-item content, full URLs, query values, or raw filter values. People profiles may use only the unchanged current `$device:` distinct ID and the documented synthetic property allowlist; never identify with the shared Viewer or merge browsers. Server business analytics is permitted only outside demo mode, uses the documented five-event catalog, HMAC-pseudonymous actor IDs, transactional outbox delivery, and sanitized properties. It must remain disabled when `DEMO_MODE=true` or `DEMO_READ_ONLY=true`.
 
 ## Architecture
 
@@ -21,6 +21,10 @@
 - `src/lib/analytics-core.ts`: event catalog, route normalization, and property allowlists
 - `src/lib/analytics.ts`: production-only Mixpanel initialization, browser-scoped People profile, tracking, and local opt-out/profile deletion
 - `src/components/shared/analytics-provider.tsx`: route-change page measurement
+- `src/lib/server-analytics-core.ts`: server business event catalog, property allowlists, demo guard, and retry policy
+- `src/lib/server-analytics.ts`: HMAC-pseudonymous transactional outbox creation
+- `src/lib/server-analytics-dispatcher.ts`: direct Mixpanel import and Discord delivery with leases and retries
+- `src/app/api/cron/server-analytics/route.ts`: secret-protected outbox recovery endpoint
 - `vercel.json`: Seoul runtime placement and same-origin forwarding to Mixpanel US ingestion
 - `prisma/schema.prisma`: canonical data model
 - `prisma/seed.ts`: idempotent Project Aetherfall synthetic seed
@@ -33,4 +37,6 @@
 
 Vercel deploys `main`. Production requires `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`, `AUTH_SECRET`, `AUTH_URL`, `DEMO_MODE=true`, and `DEMO_READ_ONLY=true`. Anonymous analytics additionally uses `NEXT_PUBLIC_MIXPANEL_TOKEN` and `NEXT_PUBLIC_MIXPANEL_ENABLED=true` in Production only. Database migrations and seeding are explicit operator actions and are never scheduled automatically.
 
-The public `/mp/*` rewrite may only forward browser-created analytics payloads to `https://api.mixpanel.com/*`. It must not enrich, persist, or generate server-side events, and DNT/opt-out behavior must stay in the browser SDK.
+Non-demo deployments may enable server business analytics with `SERVER_ANALYTICS_ENABLED=true`, `SERVER_ANALYTICS_ID_SALT`, Mixpanel service-account variables, `SERVER_EVENT_NOTIFICATIONS_ENABLED=true`, a rotated `DISCORD_SERVER_EVENT_WEBHOOK_URL`, and `CRON_SECRET`. None of these secrets may use a `NEXT_PUBLIC_` prefix or be committed. The public demo must keep server analytics and event notifications disabled.
+
+The public `/mp/*` rewrite may only forward browser-created analytics payloads to `https://api.mixpanel.com/*`. It must not enrich, persist, or generate server-side events, and DNT/opt-out behavior must stay in the browser SDK. Server events use the direct Mixpanel Import API and never pass through `/mp/*`.

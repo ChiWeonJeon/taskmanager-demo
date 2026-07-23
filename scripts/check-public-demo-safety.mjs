@@ -8,12 +8,16 @@ const forbidden = [
   ["Mac service manager", ["launch", "d"].join("")],
   ["Cloud edge SSO", ["Cloud", "flare Access"].join("")],
 ];
+const forbiddenPatterns = [
+  ["Discord webhook credential", /https:\/\/(?:discord(?:app)?\.com)\/api\/webhooks\/\d+\/[A-Za-z0-9._-]+/],
+];
 
 const violations = [];
 for (const file of files) {
   if (/\.(png|jpg|jpeg|gif|webp|ico|woff2?)$/i.test(file)) continue;
   const content = readFileSync(file, "utf8");
   for (const [label, pattern] of forbidden) if (content.includes(pattern)) violations.push(`${file}: ${label}`);
+  for (const [label, pattern] of forbiddenPatterns) if (pattern.test(content)) violations.push(`${file}: ${label}`);
 }
 if (violations.length) {
   console.error(violations.join("\n"));

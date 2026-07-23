@@ -4,6 +4,8 @@ import Credentials from "next-auth/providers/credentials";
 import { prisma } from "@/lib/db";
 import { authConfig } from "@/lib/auth.config";
 import { DEMO_USER_ID, isDemoMode } from "@/lib/demo";
+import { enqueueServerAnalyticsEvent } from "@/lib/server-analytics";
+import { scheduleServerAnalyticsDispatch } from "@/lib/server-analytics-dispatcher";
 
 const nextAuth = NextAuth({
   ...authConfig,
@@ -22,6 +24,19 @@ const nextAuth = NextAuth({
       },
     }),
   ],
+  events: {
+    async signIn({ user }) {
+      if (!user.id) return;
+      try {
+        const queued = await enqueueServerAnalyticsEvent(prisma, "Authentication Succeeded", user.id, {
+          auth_method: "credentials",
+        });
+        if (queued) scheduleServerAnalyticsDispatch();
+      } catch {
+        console.error("[server-analytics] failed to enqueue authentication event");
+      }
+    },
+  },
 });
 
 export const { handlers, signIn, signOut } = nextAuth;

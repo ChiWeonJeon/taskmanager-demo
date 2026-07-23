@@ -8,6 +8,14 @@
 |---|---|---|---|
 | GET | `/api/health` | 헬스 체크 (앱 버전 반환) | `src/app/api/health/route.ts` |
 
+## Server analytics recovery
+
+| 메서드 | 경로 | 설명 | 파일 |
+|---|---|---|---|
+| GET | `/api/cron/server-analytics` | `CRON_SECRET` Bearer 인증 후 서버 이벤트 outbox 전송 재시도 | `src/app/api/cron/server-analytics/route.ts` |
+
+이 경로는 미들웨어 공개 예외지만 자체 Bearer 검증을 통과해야 한다. 공개 데모 모드에서는 dispatcher가 항상 no-op이다.
+
 ## Entity Records / Work Items
 
 | 메서드 | 경로 | 설명 | 파일 |

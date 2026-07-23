@@ -58,6 +58,45 @@ model User {
   savedViews           SavedView[]       @relation("SavedViewCreatedBy")
 }
 
+// Durable, server-only analytics outbox. Public demo mode never writes these
+// records; non-demo business mutations create them transactionally.
+model ServerAnalyticsEvent {
+  id          String   @id @default(cuid())
+  eventName   String
+  distinctId  String
+  properties  String   @default("{}")
+  appVersion  String
+  environment String
+  occurredAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  deliveries ServerAnalyticsDelivery[]
+
+  @@index([eventName, occurredAt])
+  @@index([createdAt])
+}
+
+model ServerAnalyticsDelivery {
+  id            String    @id @default(cuid())
+  eventId       String
+  destination   String
+  status        String    @default("PENDING")
+  attempts      Int       @default(0)
+  nextAttemptAt DateTime  @default(now())
+  leaseUntil    DateTime?
+  deliveredAt   DateTime?
+  externalId    String?
+  lastError     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  event ServerAnalyticsEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, destination])
+  @@index([status, nextAttemptAt])
+  @@index([leaseUntil])
+}
+
 // ============================================================
 // ?�드 (Field)
 // ============================================================

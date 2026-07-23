@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.59.0 - 2026-07-23
+
+- Split analytics governance into the existing 11 browser UI events and a separate five-event server business catalog that remains disabled in the public demo.
+- Added a transactional server-event outbox with HMAC-pseudonymous actor IDs, explicit property allowlists, independent Mixpanel and Discord delivery state, leases, bounded retries, and dead-letter handling.
+- Added direct, strict Mixpanel Import API delivery with stable deduplication IDs and IP enrichment disabled.
+- Added secret-backed Discord notifications for every queued server event, restricted to HTTPS Discord webhook hosts, with mentions disabled and content, identity, and credentials excluded.
+- Instrumented successful authentication plus confirmed project creation, work-item creation/update, and checklist-run completion transactions; the synthetic Viewer login remains excluded by the demo guard.
+- Added a protected recovery endpoint, daily Vercel recovery schedule, schema migrations, environment documentation, focused analytics coverage, and a public-scan guard against committed Discord webhook credentials.
+
 ## 0.58.4 - 2026-07-13
 
 - Fixed clipped calendar cell content on mobile and desktop by reserving a measured row for the `+N More` overflow control and preventing its localized label from wrapping.

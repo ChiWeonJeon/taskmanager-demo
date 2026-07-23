@@ -61,6 +61,7 @@ export const authConfig: NextAuthConfig = {
       const isPublic = pathname === "/login"
         || pathname.startsWith("/api/auth")
         || pathname === "/api/health"
+        || pathname === "/api/cron/server-analytics"
         || pathname.startsWith("/mp/");
 
       if (isPublic) {

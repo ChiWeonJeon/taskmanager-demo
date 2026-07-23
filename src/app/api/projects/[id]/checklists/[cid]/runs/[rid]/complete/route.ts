@@ -4,6 +4,8 @@ import { resolveChecklistAccess, checklistError } from "@/lib/checklist/api";
 import { getChecklistRecipientIds } from "@/lib/checklist/recipients";
 import { notifyChecklistRunEvent } from "@/lib/notifications/server";
 import { getServerMessages } from "@/lib/i18n/server";
+import { enqueueServerAnalyticsEvent } from "@/lib/server-analytics";
+import { scheduleServerAnalyticsDispatch } from "@/lib/server-analytics-dispatcher";
 
 type Ctx = { params: Promise<{ id: string; cid: string; rid: string }> };
 
@@ -41,7 +43,7 @@ export async function POST(_request: NextRequest, { params }: Ctx) {
     where: { runId: rid, checked: true },
   });
 
-  await prisma.$transaction(async (tx) => {
+  const serverEventQueued = await prisma.$transaction(async (tx) => {
     await tx.checklistRun.update({
       where: { id: rid },
       data: { status: "COMPLETED", completedById: userId, completedAt: new Date() },
@@ -65,7 +67,15 @@ export async function POST(_request: NextRequest, { params }: Ctx) {
         checkedItems: checkedCount,
       },
     });
+
+    return enqueueServerAnalyticsEvent(tx, "Checklist Run Completed", userId, {
+      workspace_scope: "project",
+      checked_item_count: checkedCount,
+      total_item_count: run._count.items,
+    });
   });
+
+  if (serverEventQueued) scheduleServerAnalyticsDispatch();
 
   return NextResponse.json({ ok: true });
 }

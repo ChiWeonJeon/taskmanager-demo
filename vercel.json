@@ -1,6 +1,12 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "regions": ["icn1"],
+  "crons": [
+    {
+      "path": "/api/cron/server-analytics",
+      "schedule": "0 0 * * *"
+    }
+  ],
   "rewrites": [
     {
       "source": "/mp/:path*",

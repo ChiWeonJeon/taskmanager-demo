@@ -7,6 +7,8 @@ import { logApiError } from "@/lib/api-logger";
 import { ensureProjectOwnerMembership } from "@/lib/project-permissions";
 import { ensureProjectHasAllIssueTypes, listAllIssueTypeIds } from "@/lib/issue-type-config";
 import { getServerMessages } from "@/lib/i18n/server";
+import { enqueueServerAnalyticsEvent } from "@/lib/server-analytics";
+import { scheduleServerAnalyticsDispatch } from "@/lib/server-analytics-dispatcher";
 
 export async function GET(request: NextRequest) {
   const messages = await getServerMessages();
@@ -102,7 +104,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: messages.errors.cannotIdentifyCreator }, { status: 400 });
   }
 
-  const project = await prisma.$transaction(async (tx) => {
+  const { project, serverEventQueued } = await prisma.$transaction(async (tx) => {
     const issueTypeIds = await listAllIssueTypeIds(tx);
     const defaultIssueTypeId = issueTypeIds[0] ?? null;
 
@@ -118,8 +120,13 @@ export async function POST(request: NextRequest) {
 
     await ensureProjectOwnerMembership(tx, created.id, creatorId);
     await ensureProjectHasAllIssueTypes(tx, created.id);
-    return created;
+    const queued = await enqueueServerAnalyticsEvent(tx, "Project Created", creatorId, {
+      project_type: created.isPersonal ? "personal" : "shared",
+    });
+    return { project: created, serverEventQueued: queued };
   });
+
+  if (serverEventQueued) scheduleServerAnalyticsDispatch();
 
   return NextResponse.json(project, { status: 201 });
 }

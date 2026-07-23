@@ -32,6 +32,9 @@ import {
   normalizeFieldValueForStorage,
   resolveStatusId,
 } from "@/lib/work-item-mutation";
+import { enqueueServerAnalyticsEvent } from "@/lib/server-analytics";
+import { scheduleServerAnalyticsDispatch } from "@/lib/server-analytics-dispatcher";
+import { serverWorkspaceScope } from "@/lib/server-analytics-core";
 
 async function getOrCreateProjectIssueNumber(tx: Prisma.TransactionClient, workItemId: string, projectId: string) {
   const existing = await tx.workItemProjectIssueKey.findUnique({
@@ -473,7 +476,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   const newAssigneeId = assigneeChanged ? nextAssigneeId : null;
   const fieldKeys = historyData.map((h) => h.field).filter((f) => f !== "comment");
 
-  const updated = await prisma.$transaction(async (tx) => {
+  const { updated, serverEventQueued } = await prisma.$transaction(async (tx) => {
     if (deleteFieldIds.size > 0) {
       await deleteFieldValues(tx, WORK_ITEM_OBJECT_TYPE, id, Array.from(deleteFieldIds));
     }
@@ -564,8 +567,22 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       });
     }
 
-    return attachWorkItemFieldValuesToDetail(tx, result);
+    const detail = await attachWorkItemFieldValuesToDetail(tx, result);
+    const changedFieldCount = new Set([
+      ...fieldKeys,
+      ...deleteFieldIds,
+      ...upsertFieldValues.map((fieldValue) => fieldValue.fieldId),
+    ]).size;
+    const queued = actorId
+      ? await enqueueServerAnalyticsEvent(tx, "Work Item Updated", actorId, {
+          workspace_scope: serverWorkspaceScope(nextProject),
+          changed_field_count: changedFieldCount,
+        })
+      : false;
+    return { updated: detail, serverEventQueued: queued };
   });
+
+  if (serverEventQueued) scheduleServerAnalyticsDispatch();
 
   return NextResponse.json(updated);
 }

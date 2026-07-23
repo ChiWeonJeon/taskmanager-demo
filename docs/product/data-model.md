@@ -24,7 +24,15 @@ ObjectRecord ──1:N── ObjectRecordFieldValue
 Project ──1:N── ProjectMember ──N:1── User
 ProjectMember ──N:1── Role
 IssueCounter / ProjectIssueCounter (채번)
+
+ServerAnalyticsEvent ──1:N── ServerAnalyticsDelivery
 ```
+
+## 서버 분석 outbox
+
+`ServerAnalyticsEvent`는 비데모 프로덕션의 확정된 비즈니스 상태 변경을 저장한다. `distinctId`에는 원본 사용자 ID가 아니라 서버 전용 salt로 만든 HMAC 가명 ID만 저장하고, `properties`에는 이벤트별 allowlist를 통과한 원시형 값만 JSON으로 저장한다.
+
+`ServerAnalyticsDelivery`는 이벤트마다 `MIXPANEL`, `DISCORD` 목적지 행을 각각 보유한다. `status`, `attempts`, `nextAttemptAt`, `leaseUntil`, `deliveredAt`, `externalId`, `lastError`로 두 외부 전송을 독립적으로 재시도하고 복구한다. `(eventId, destination)` unique 제약이 목적지별 중복 큐 생성을 막는다. 공개 데모와 read-only 모드에서는 outbox를 생성하거나 전송하지 않는다.
 
 ## 메타모델
 

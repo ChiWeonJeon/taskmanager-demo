@@ -31,6 +31,9 @@ import {
 } from "@/lib/notifications/server";
 import { listProjectIssueTypesWithSchemas, parseStoredValue, pickDefaultIssueType } from "@/lib/issue-type-config";
 import { logProjectActivity } from "@/lib/activity/log";
+import { enqueueServerAnalyticsEvent } from "@/lib/server-analytics";
+import { scheduleServerAnalyticsDispatch } from "@/lib/server-analytics-dispatcher";
+import { serverWorkspaceScope } from "@/lib/server-analytics-core";
 
 function isMissingRequiredField(
   field: { id: string; key: string; isRequired: boolean },
@@ -325,7 +328,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid custom field value." }, { status: 400 });
   }
 
-  const createdWorkItem = await prisma.$transaction(async (tx) => {
+  const { createdWorkItem, serverEventQueued } = await prisma.$transaction(async (tx) => {
     const issueNumber = await reserveProjectIssueNumber(tx, project.id);
     const issueKey = `${project.key}-${issueNumber}`;
 
@@ -419,8 +422,17 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    return attachWorkItemFieldValuesToDetail(tx, created);
+    const detail = await attachWorkItemFieldValuesToDetail(tx, created);
+    const queued = currentUserId
+      ? await enqueueServerAnalyticsEvent(tx, "Work Item Created", currentUserId, {
+          workspace_scope: serverWorkspaceScope(project),
+          issue_type: resolvedIssueType.name,
+        })
+      : false;
+    return { createdWorkItem: detail, serverEventQueued: queued };
   });
+
+  if (serverEventQueued) scheduleServerAnalyticsDispatch();
 
   await logProjectActivity({
     projectId: project.id,
